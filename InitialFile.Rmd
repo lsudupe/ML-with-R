@@ -1,0 +1,84 @@
+---
+title: "Managing and Understanding Data"
+author: "Escribir vuestro nombre y apellidos"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+---
+
+```{r setup, include=FALSE}
+# knitr options
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r libraries, include=FALSE}
+# Install packages
+# Load packages
+# ...
+
+library(knitr)
+```
+
+
+```{r input, include=FALSE}
+# Input / Output variables
+# Tuning parameters
+# ...
+file1 <- "usedcars.csv"
+
+```
+
+
+
+
+> * Primera toma de contacto con un informe dinámico donde se muestra algunas de sus caracteristicas.
+> * Son diferentes trozos de un libro.
+> * Se lee un archivo csv
+
+
+-----------------------------------------------------------
+
+`r Sys.Date()`
+
+By the end of this notes, you will understand:
+
+* The basic R data structures and how to use them to store and extract data
+
+* How to get data into R from a variety of source formats
+* Common methods for understanding and visualizing complex data
+
+
+# R data structures
+
+The R data structures used most frequently in machine learning are *vectors*, *factors*, *lists*, *arrays*,
+and *data frames*.
+
+
+To find out more about machine learning see [@andrieu2003introduction;@goldberg1988genetic].
+
+## Vectors 
+
+The fundamental R data structure is the **vector**, which stores an ordered set of
+values called **elements**. A vector can contain any number of elements. However, all
+the elements must be of the same type; for instance, a vector cannot contain both
+numbers and text.
+
+There are several vector types commonly used in machine learning:`integer`(numbers without decimals), `numeric` (numbers with decimals), `character` (text data),
+or `logical` (`TRUE` or `FALSE` values). There are also two special values: `NULL`, which is
+used to indicate the absence of any value, and `NA`, which indicates a missing value.
+
+
+...
+
+...
+
+...
+
+
+Create vectors of data for three medical patients:
+
+```{r chunck1}
+# create vectors of data for three medical patients
+subject_name <- c("John Doe", "Jane Doe", "Steve Graves")
+temperature <- c(98.1, 98.6, 101.4)
+flu_status <- c(FALSE, FALSE, TRUE)
+```
