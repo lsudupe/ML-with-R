@@ -77,7 +77,6 @@ used to indicate the absence of any value, and `NA`, which indicates a missing v
 
 
 Create vectors of data for three medical patients:
-
 ```{r chunck1}
 # create vectors of data for three medical patients
 subject_name <- c("John Doe", "Jane Doe", "Steve Graves")
@@ -85,8 +84,47 @@ temperature <- c(98.1, 98.6, 101.4)
 flu_status <- c(FALSE, FALSE, TRUE)
 ```
 
+Access the second element in body temperature vector
+```{r}
+# access the second element in body temperature vector
+temperature[2]
+```
+Examples of accessing items in vector include items in the range 2 to 3
+```{r}
+## examples of accessing items in vector
+# include items in the range 2 to 3
+temperature[2:3]
+```
+Exclude item 2 using the minus sign
+```{r}
+# exclude item 2 using the minus sign
+temperature[-2]
+```
+Use a vector to indicate whether to include item
+```{r}
+# use a vector to indicate whether to include item
+temperature[c(TRUE, TRUE, FALSE)]
+```
 
-Access the second ele
+# Exploring and understanding data
+
+After collecting data and loading it into R data structures, the next step in 
+the machine learning process involves examining the data in detail. It is during
+this step that you will begin to explore the data’s features and examples, and 
+realize the peculiarities that make your data unique. The better you understand 
+your data, the better you will be able to match a machine learning model to your 
+learning problem. The best way to understand the process of data exploration is 
+by example. In this section, we will explore the **usedcars.csv** dataset, which 
+contains actual data about used cars recently advertised for sale on a popular 
+U.S. website.
+
+...
+
+...
+
+...
+
+
 
 
 
