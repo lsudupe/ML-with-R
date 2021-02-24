@@ -1,7 +1,10 @@
 ---
 title: "Managing and Understanding Data"
-author: "Escribir vuestro nombre y apellidos"
+author: "Laura Sudupe Medinilla"
 date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output: 
+  html_document:
+    toC: TRUE
 ---
 
 ```{r setup, include=FALSE}
@@ -30,7 +33,7 @@ file1 <- "usedcars.csv"
 
 
 
-> * Primera toma de contacto con un informe dinámico donde se muestra algunas de sus caracteristicas.
+> * Primera toma de contacto con un informe din?mico donde se muestra algunas de sus caracteristicas.
 > * Son diferentes trozos de un libro.
 > * Se lee un archivo csv
 
@@ -42,7 +45,6 @@ file1 <- "usedcars.csv"
 By the end of this notes, you will understand:
 
 * The basic R data structures and how to use them to store and extract data
-
 * How to get data into R from a variety of source formats
 * Common methods for understanding and visualizing complex data
 
@@ -82,3 +84,9 @@ subject_name <- c("John Doe", "Jane Doe", "Steve Graves")
 temperature <- c(98.1, 98.6, 101.4)
 flu_status <- c(FALSE, FALSE, TRUE)
 ```
+
+
+Access the second ele
+
+
+
