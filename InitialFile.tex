@@ -1,0 +1,663 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Managing and Understanding Data},
+  pdfauthor={Laura Sudupe Medinilla},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{48,48,48}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{1.00,0.81,0.69}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.50,0.62,0.50}{\textbf{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.86,0.64,0.64}{#1}}
+\newcommand{\BuiltInTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.86,0.64,0.64}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.50,0.62,0.50}{#1}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.50,0.62,0.50}{\textbf{#1}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.86,0.64,0.64}{\textbf{#1}}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.94,0.87,0.69}{#1}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.87,0.87,0.75}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.86,0.86,0.80}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.50,0.62,0.50}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.76,0.75,0.62}{#1}}
+\newcommand{\ExtensionTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.75,0.75,0.82}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.94,0.94,0.56}{#1}}
+\newcommand{\ImportTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.50,0.62,0.50}{\textbf{#1}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.94,0.87,0.69}{#1}}
+\newcommand{\NormalTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.94,0.94,0.82}{#1}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.94,0.94,0.56}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{1.00,0.81,0.69}{\textbf{#1}}}
+\newcommand{\RegionMarkerTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.86,0.64,0.64}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.80,0.58,0.58}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.80,0.58,0.58}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.80,0.80,0.80}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.80,0.58,0.58}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.50,0.62,0.50}{\textbf{#1}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifluatex
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+
+\title{Managing and Understanding Data}
+\author{Laura Sudupe Medinilla}
+\date{26 de febrero, 2021}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\begin{quote}
+\begin{itemize}
+\tightlist
+\item
+  Primera toma de contacto con un informe din?mico donde se muestra
+  algunas de sus caracteristicas.
+\item
+  Son diferentes trozos de un libro.
+\item
+  Se lee un archivo csv
+\end{itemize}
+\end{quote}
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+2021-02-26
+
+By the end of this notes, you will understand:
+
+\begin{itemize}
+\tightlist
+\item
+  The basic R data structures and how to use them to store and extract
+  data
+\item
+  How to get data into R from a variety of source formats
+\item
+  Common methods for understanding and visualizing complex data
+\end{itemize}
+
+\hypertarget{r-data-structures}{%
+\section{R data structures}\label{r-data-structures}}
+
+The R data structures used most frequently in machine learning are
+\emph{vectors}, \emph{factors}, \emph{lists}, \emph{arrays}, and
+\emph{data frames}.
+
+To find out more about machine learning see
+{[}@andrieu2003introduction;@goldberg1988genetic{]}.
+
+\hypertarget{vectors}{%
+\subsection{Vectors}\label{vectors}}
+
+The fundamental R data structure is the \textbf{vector}, which stores an
+ordered set of values called \textbf{elements}. A vector can contain any
+number of elements. However, all the elements must be of the same type;
+for instance, a vector cannot contain both numbers and text.
+
+There are several vector types commonly used in machine
+learning:\texttt{integer}(numbers without decimals), \texttt{numeric}
+(numbers with decimals), \texttt{character} (text data), or
+\texttt{logical} (\texttt{TRUE} or \texttt{FALSE} values). There are
+also two special values: \texttt{NULL}, which is used to indicate the
+absence of any value, and \texttt{NA}, which indicates a missing value.
+
+\ldots{}
+
+\ldots{}
+
+\ldots{}
+
+Create vectors of data for three medical patients:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# create vectors of data for three medical patients}
+\NormalTok{subject\_name }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"John Doe"}\NormalTok{, }\StringTok{"Jane Doe"}\NormalTok{, }\StringTok{"Steve Graves"}\NormalTok{)}
+\NormalTok{temperature }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\FloatTok{98.1}\NormalTok{, }\FloatTok{98.6}\NormalTok{, }\FloatTok{101.4}\NormalTok{)}
+\NormalTok{flu\_status }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\ConstantTok{FALSE}\NormalTok{, }\ConstantTok{FALSE}\NormalTok{, }\ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+Access the second element in body temperature vector
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# access the second element in body temperature vector}
+\NormalTok{temperature[}\DecValTok{2}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 98.6
+\end{verbatim}
+
+Examples of accessing items in vector include items in the range 2 to 3
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\# examples of accessing items in vector}
+\CommentTok{\# include items in the range 2 to 3}
+\NormalTok{temperature[}\DecValTok{2}\SpecialCharTok{:}\DecValTok{3}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1]  98.6 101.4
+\end{verbatim}
+
+Exclude item 2 using the minus sign
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# exclude item 2 using the minus sign}
+\NormalTok{temperature[}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1]  98.1 101.4
+\end{verbatim}
+
+Use a vector to indicate whether to include item
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# use a vector to indicate whether to include item}
+\NormalTok{temperature[}\FunctionTok{c}\NormalTok{(}\ConstantTok{TRUE}\NormalTok{, }\ConstantTok{TRUE}\NormalTok{, }\ConstantTok{FALSE}\NormalTok{)]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 98.1 98.6
+\end{verbatim}
+
+\hypertarget{exploring-and-understanding-data}{%
+\section{Exploring and understanding
+data}\label{exploring-and-understanding-data}}
+
+After collecting data and loading it into R data structures, the next
+step in the machine learning process involves examining the data in
+detail. It is during this step that you will begin to explore the data's
+features and examples, and realize the peculiarities that make your data
+unique. The better you understand your data, the better you will be able
+to match a machine learning model to your learning problem. The best way
+to understand the process of data exploration is by example. In this
+section, we will explore the \textbf{usedcars.csv} dataset, which
+contains actual data about used cars recently advertised for sale on a
+popular U.S. website.
+
+\ldots{}
+
+\ldots{}
+
+\ldots{}
+
+Since the dataset is stored in CSV form, we can use the (`read.csv()')
+function to load the data into an R data frame:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\#\#\#\# Exploring and understanding data {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\DocumentationTok{\#\# data exploration example using used car data}
+\NormalTok{usedcars }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\AttributeTok{file =} \StringTok{\textquotesingle{}usedcars.csv\textquotesingle{}}\NormalTok{, }\AttributeTok{stringsAsFactors =} \ConstantTok{FALSE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{exploring-the-structure-of-data}{%
+\subsection{Exploring the structure of
+data}\label{exploring-the-structure-of-data}}
+
+One of the first questions to ask in your investigation should be about
+how data is organized. If you are fortunate, your source will provide a
+\textbf{data dictionary}, a document that describes the data´s features.
+In our case, the used car data does not come with this documentation, so
+we´ll need to create our own.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# get structure of used car data}
+\FunctionTok{str}\NormalTok{(usedcars)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 'data.frame':    150 obs. of  6 variables:
+##  $ year        : int  2011 2011 2011 2011 2012 2010 2011 2010 2011 2010 ...
+##  $ model       : chr  "SEL" "SEL" "SEL" "SEL" ...
+##  $ price       : int  21992 20995 19995 17809 17500 17495 17000 16995 16995 16995 ...
+##  $ mileage     : int  7413 10926 7351 11613 8367 25125 27393 21026 32655 36116 ...
+##  $ color       : chr  "Yellow" "Gray" "Silver" "Gray" ...
+##  $ transmission: chr  "AUTO" "AUTO" "AUTO" "AUTO" ...
+\end{verbatim}
+
+\hypertarget{show-some-registers}{%
+\subsection{Show some registers}\label{show-some-registers}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Table of 6 first registers}
+\FunctionTok{kable}\NormalTok{(}\FunctionTok{head}\NormalTok{(usedcars), }\AttributeTok{caption =} \StringTok{"6 first registers of data"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rlrrll@{}}
+\caption{6 first registers of data}\tabularnewline
+\toprule
+year & model & price & mileage & color & transmission \\
+\midrule
+\endfirsthead
+\toprule
+year & model & price & mileage & color & transmission \\
+\midrule
+\endhead
+2011 & SEL & 21992 & 7413 & Yellow & AUTO \\
+2011 & SEL & 20995 & 10926 & Gray & AUTO \\
+2011 & SEL & 19995 & 7351 & Silver & AUTO \\
+2011 & SEL & 17809 & 11613 & Gray & AUTO \\
+2012 & SE & 17500 & 8367 & White & AUTO \\
+2010 & SEL & 17495 & 25125 & Silver & AUTO \\
+\bottomrule
+\end{longtable}
+
+\hypertarget{exploring-numeric-variables}{%
+\subsection{Exploring numeric
+variables}\label{exploring-numeric-variables}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\DocumentationTok{\#\# Exploring numeric variables {-}{-}{-}{-}{-}}
+
+\CommentTok{\# summarize numeric variables}
+\FunctionTok{summary}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{year)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##    2000    2008    2009    2009    2010    2012
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(usedcars[}\FunctionTok{c}\NormalTok{(}\StringTok{"price"}\NormalTok{, }\StringTok{"mileage"}\NormalTok{)])}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      price          mileage      
+##  Min.   : 3800   Min.   :  4867  
+##  1st Qu.:10995   1st Qu.: 27200  
+##  Median :13592   Median : 36385  
+##  Mean   :12962   Mean   : 44261  
+##  3rd Qu.:14904   3rd Qu.: 55125  
+##  Max.   :21992   Max.   :151479
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# calculate the mean income}
+\NormalTok{(}\DecValTok{36000} \SpecialCharTok{+} \DecValTok{44000} \SpecialCharTok{+} \DecValTok{56000}\NormalTok{) }\SpecialCharTok{/} \DecValTok{3}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 45333.33
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{mean}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\DecValTok{36000}\NormalTok{, }\DecValTok{44000}\NormalTok{, }\DecValTok{56000}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 45333.33
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# the median income}
+\FunctionTok{median}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\DecValTok{36000}\NormalTok{, }\DecValTok{44000}\NormalTok{, }\DecValTok{56000}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 44000
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# the min/max of used car prices}
+\FunctionTok{range}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1]  3800 21992
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# the difference of the range}
+\FunctionTok{diff}\NormalTok{(}\FunctionTok{range}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 18192
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# IQR for used car prices}
+\FunctionTok{IQR}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 3909.5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# use quantile to calculate five{-}number summary}
+\FunctionTok{quantile}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      0%     25%     50%     75%    100% 
+##  3800.0 10995.0 13591.5 14904.5 21992.0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# the 99th percentile}
+\FunctionTok{quantile}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price, }\AttributeTok{probs =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.01}\NormalTok{, }\FloatTok{0.99}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       1%      99% 
+##  5428.69 20505.00
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# quintiles}
+\FunctionTok{quantile}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price, }\FunctionTok{seq}\NormalTok{(}\AttributeTok{from =} \DecValTok{0}\NormalTok{, }\AttributeTok{to =} \DecValTok{1}\NormalTok{, }\AttributeTok{by =} \FloatTok{0.20}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      0%     20%     40%     60%     80%    100% 
+##  3800.0 10759.4 12993.8 13992.0 14999.0 21992.0
+\end{verbatim}
+
+\hypertarget{table-with-information-about-mileage-and-price}{%
+\subsection{Table with information about mileage and
+price}\label{table-with-information-about-mileage-and-price}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{mileage}\OtherTok{\textless{}{-}}\FunctionTok{summary}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage)}
+\NormalTok{price}\OtherTok{\textless{}{-}}\FunctionTok{summary}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price)}
+\FunctionTok{kable}\NormalTok{(}\FunctionTok{rbind}\NormalTok{(mileage,price), }\AttributeTok{caption=} \StringTok{"Descriptive statistic: mileage and price"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrrrr@{}}
+\caption{Descriptive statistic: mileage and price}\tabularnewline
+\toprule
+& Min. & 1st Qu. & Median & Mean & 3rd Qu. & Max. \\
+\midrule
+\endfirsthead
+\toprule
+& Min. & 1st Qu. & Median & Mean & 3rd Qu. & Max. \\
+\midrule
+\endhead
+mileage & 4867 & 27200.25 & 36385.0 & 44260.65 & 55124.5 & 151479 \\
+price & 3800 & 10995.00 & 13591.5 & 12961.93 & 14904.5 & 21992 \\
+\bottomrule
+\end{longtable}
+
+\hypertarget{some-descriptive-graphics}{%
+\subsection{Some descriptive graphics}\label{some-descriptive-graphics}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{par}\NormalTok{(}\AttributeTok{mfrow=}\FunctionTok{c}\NormalTok{(}\DecValTok{2}\NormalTok{,}\DecValTok{2}\NormalTok{))}
+\FunctionTok{hist}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage, }\AttributeTok{xlab=}\StringTok{"Mileage"}\NormalTok{, }\AttributeTok{main=}\StringTok{"Histogram of mileage"}\NormalTok{,}\AttributeTok{col=}\StringTok{"grey85"}\NormalTok{)}
+\FunctionTok{hist}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price, }\AttributeTok{xlab=}\StringTok{"Price"}\NormalTok{, }\AttributeTok{main=}\StringTok{"Histogram of price"}\NormalTok{,}\AttributeTok{col=}\StringTok{"grey85"}\NormalTok{)}
+\NormalTok{usedcars}\SpecialCharTok{$}\NormalTok{transmission }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{transmission)}
+\FunctionTok{plot}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage, usedcars}\SpecialCharTok{$}\NormalTok{price, }\AttributeTok{pch=}\DecValTok{16}\NormalTok{,}
+\AttributeTok{col=}\NormalTok{usedcars}\SpecialCharTok{$}\NormalTok{transmission,}\AttributeTok{xlab=}\StringTok{"Mileage"}\NormalTok{, }\AttributeTok{ylab=}\StringTok{"Price"}\NormalTok{)}
+\FunctionTok{legend}\NormalTok{(}\StringTok{"topright"}\NormalTok{, }\AttributeTok{pch=}\DecValTok{16}\NormalTok{, }\FunctionTok{c}\NormalTok{(}\StringTok{"AUTO"}\NormalTok{,}\StringTok{"MANUAL"}\NormalTok{), }\AttributeTok{col=}\DecValTok{1}\SpecialCharTok{:}\DecValTok{2}\NormalTok{, }\AttributeTok{cex=}\FloatTok{0.5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{InitialFile_files/figure-latex/unnamed-chunk-20-1.pdf}
+
+\hypertarget{visualizing-numeric-variables---boxplots}{%
+\subsection{Visualizing numeric variables -
+boxplots}\label{visualizing-numeric-variables---boxplots}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# boxplot of used car prices and mileage}
+\FunctionTok{boxplot}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price, }\AttributeTok{main=}\StringTok{"Boxplot of Used Car Prices"}\NormalTok{,}\AttributeTok{ylab=}\StringTok{"Price ($)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{InitialFile_files/figure-latex/unnamed-chunk-21-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{boxplot}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage, }\AttributeTok{main=}\StringTok{"Boxplot of Used Car Mileage"}\NormalTok{,}
+\AttributeTok{ylab=}\StringTok{"Odometer (mi.)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{InitialFile_files/figure-latex/unnamed-chunk-21-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# histograms of used car prices and mileage}
+\FunctionTok{hist}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price, }\AttributeTok{main =} \StringTok{"Histogram of Used Car Prices"}\NormalTok{,}
+\AttributeTok{xlab =} \StringTok{"Price ($)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{InitialFile_files/figure-latex/unnamed-chunk-22-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{hist}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage, }\AttributeTok{main =} \StringTok{"Histogram of Used Car Mileage"}\NormalTok{,}
+\AttributeTok{xlab =} \StringTok{"Odometer (mi.)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{InitialFile_files/figure-latex/unnamed-chunk-22-2.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# variance and standard deviation of the used car data}
+\FunctionTok{var}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 9749892
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{price)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 3122.482
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{var}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 728033954
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sd}\NormalTok{(usedcars}\SpecialCharTok{$}\NormalTok{mileage)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 26982.1
+\end{verbatim}
+
+\hypertarget{measuring-spread---quartiles-and-the-five-number-summary}{%
+\subsection{Measuring spread - quartiles and the five-number
+summary}\label{measuring-spread---quartiles-and-the-five-number-summary}}
+
+The \textbf{five-number summary} is a set of five statistics that
+roughly depict the spread of a dataset. All five of the statistics are
+included in the output of the (`summary()') function. Written in order,
+they are:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Minimum (Min.)
+\item
+  First quartile, or Q1 (1st Qu.)
+\item
+  Median, or Q2 (Median)
+\item
+  Third quartile, or Q3 (3rd Qu.)
+\item
+  Maximum (Max.)
+\end{enumerate}
+
+\hypertarget{measuring-spread---variance-and-standard-deviation}{%
+\subsection{Measuring spread - variance and standard
+deviation}\label{measuring-spread---variance-and-standard-deviation}}
+
+In order to calculate the standard deviation, we must first obtain the
+\textbf{variance} , which is defined as the average of the squared
+differences between each value and the mean value. In mathematical
+notation, the variance of a set of (`n') values of (`x') is defined by
+the following formula. The Greek letter (`mu') (\emph{μ}) (similar in
+appearance to an m) denotes the mean of the values, and the variance
+itself is denoted by the Greek letter (`sigma') (**) squared (similar to
+a b turned sideways):
+
+\(\Var(X) = \sigma^{2} = \frac{1}{n}\sum_{i = l}^{n} (x_{i} - \mu)^{2}\)
+
+The standard deviation is the square root of the variance, and is
+denoted by (`sigma') as shown in the following formula:
+
+\(\StdDev(X) = \sigma = \sqrt{(\frac{1}{n}\sum_{i = l}^{n} (x_{i} - \mu)^{2})}\)
+
+\emph{Note}. For more details on using mathematical expressions in Latex
+(R Markdown) see
+\url{https://es.sharelatex.com/learn/Mathematical_expressions}.
+
+\hypertarget{addenda}{%
+\subsection{Addenda}\label{addenda}}
+
+All these these methods should be used to analyze data and solve
+problems like the ozone layer (1986) or socioeconomic problems like the
+precarious work (2000).
+
+The main goal is to accomplish long-term growth as stated in
+Doppelhofer, Miller , and others (2004).
+
+\hypertarget{references}{%
+\section{References}\label{references}}
+
+\end{document}

@@ -3,8 +3,14 @@ title: "Managing and Understanding Data"
 author: "Laura Sudupe Medinilla"
 date: '`r format(Sys.Date(),"%e de %B, %Y")`'
 output: 
+  pdf_document:
+    toc: TRUE
+    highlight: zenburn
   html_document:
-    toC: TRUE
+    toc: TRUE
+    theme: united
+  knit: rmarkdown::render("InitialFile.Rmd", c("pdf_document", "html_document"),
+  output_file = c("Rmarkdown.pdf","Rmarkdown.html")
 ---
 
 ```{r setup, include=FALSE}
