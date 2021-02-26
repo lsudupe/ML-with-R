@@ -203,13 +203,75 @@ quantile(usedcars$price, seq(from = 0, to = 1, by = 0.20))
 ## Table with information about mileage and price
 
 ```{r}
+mileage<-summary(usedcars$mileage)
+price<-summary(usedcars$price)
+kable(rbind(mileage,price), caption= "Descriptive statistic: mileage and price")
+```
+## Some descriptive graphics
 
+```{r}
+par(mfrow=c(2,2))
+hist(usedcars$mileage, xlab="Mileage", main="Histogram of mileage",col="grey85")
+hist(usedcars$price, xlab="Price", main="Histogram of price",col="grey85")
+usedcars$transmission <- factor(usedcars$transmission)
+plot(usedcars$mileage, usedcars$price, pch=16,
+col=usedcars$transmission,xlab="Mileage", ylab="Price")
+legend("topright", pch=16, c("AUTO","MANUAL"), col=1:2, cex=0.5)
+```
+
+## Visualizing numeric variables - boxplots
+
+```{r}
+# boxplot of used car prices and mileage
+boxplot(usedcars$price, main="Boxplot of Used Car Prices",ylab="Price ($)")
+
+boxplot(usedcars$mileage, main="Boxplot of Used Car Mileage",
+ylab="Odometer (mi.)")
+```
+```{r}
+# histograms of used car prices and mileage
+hist(usedcars$price, main = "Histogram of Used Car Prices",
+xlab = "Price ($)")
+
+hist(usedcars$mileage, main = "Histogram of Used Car Mileage",
+xlab = "Odometer (mi.)")
+```
+```{r}
+# variance and standard deviation of the used car data
+var(usedcars$price)
+```
+```{r}
+sd(usedcars$price)
+```
+```{r}
+var(usedcars$mileage)
+```
+```{r}
+sd(usedcars$mileage)
 ```
 
 
+## Measuring spread - quartiles and the five-number summary
 
+The **five-number summary** is a set of five statistics that roughly depict the 
+spread of a dataset. All five of the statistics are included in the output of 
+the ('summary()') function. Written in order, they are:
+ 
+  1. Minimum (Min.)
+  2. First quartile, or Q1 (1st Qu.)
+  3. Median, or Q2 (Median)
+  4. Third quartile, or Q3 (3rd Qu.)
+  5. Maximum (Max.)
+  
+## Measuring spread - variance and standard deviation
 
-
+In order to calculate the standard deviation, we must first obtain the **variance**
+, which is defined as the average of the squared differences between each value 
+and the mean value. In mathematical notation, the variance of a set of ('n') 
+values of ('x') is defined by the following formula. The Greek letter ('mu') 
+(*μ*) (similar in appearance to an m) denotes the mean of the values, and the 
+variance itself is denoted by the Greek letter ('sigma') (**) squared (similar 
+to a b turned sideways):
 
 
 
