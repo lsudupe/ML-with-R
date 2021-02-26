@@ -270,12 +270,29 @@ In order to calculate the standard deviation, we must first obtain the **varianc
 and the mean value. In mathematical notation, the variance of a set of ('n') 
 values of ('x') is defined by the following formula. The Greek letter ('mu') 
 (*μ*) (similar in appearance to an m) denotes the mean of the values, and the 
-variance itself is denoted by the Greek letter ('sigma') (**) squared (similar 
+variance itself is denoted by the Greek letter ('sigma') (**) squared (similar 
 to a b turned sideways):
 
+$\Var(X) = \sigma^{2} = \frac{1}{n}\sum_{i = l}^{n} (x_{i} - \mu)^{2}$
+
+The standard deviation is the square root of the variance, and is denoted by 
+('sigma') as shown in the following formula:
+
+$\StdDev(X) = \sigma = \sqrt{(\frac{1}{n}\sum_{i = l}^{n} (x_{i} - \mu)^{2})}$
+
+*Note*. For more details on using mathematical expressions in Latex (R Markdown)
+see https://es.sharelatex.com/learn/Mathematical_expressions.
+
+## Addenda
+
+All these these methods should be used to analyze data and solve problems like 
+the ozone layer (1986) or socioeconomic problems like the precarious work (2000).
+
+The main goal is to accomplish long-term growth as stated in Doppelhofer, Miller
+, and others (2004).
 
 
-
+# References
 
 
 
