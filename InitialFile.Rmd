@@ -9,6 +9,8 @@ output:
   html_document:
     toc: TRUE
     theme: united
+  bibliography: scholar.bib
+  csl: apa.csl
   knit: rmarkdown::render("InitialFile.Rmd", c("pdf_document", "html_document"),
   output_file = c("Rmarkdown.pdf","Rmarkdown.html")
 ---
@@ -300,6 +302,15 @@ The main goal is to accomplish long-term growth as stated in Doppelhofer, Miller
 
 # References
 
+[@andrieu2003introduction]
+
+[@beck2000nuevo]
+
+[@doppelhofer2004determinants]
+
+[@goldberg1988genetic]
+
+[@lopez1986capa]
 
 
 
