@@ -125,6 +125,55 @@ U.S. website.
 ...
 
 
+Since the dataset is stored in CSV form, we can use the ('read.csv()') function 
+to load the data into an R data frame:
+```{r}
+##### Exploring and understanding data --------------------
+
+## data exploration example using used car data
+usedcars <- read.csv(file = 'usedcars.csv', stringsAsFactors = FALSE)
+```
+
+
+## Exploring the structure of data
+
+One of the first questions to ask in your investigation should be about how data
+is organized. If you are fortunate, your source will provide a **data dictionary**,
+a document that describes the data´s features. In our case, the used car data 
+does not come with this documentation, so we´ll need to create our own.
+```{r}
+# get structure of used car data
+str(usedcars)
+```
+
+## Show some registers
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
