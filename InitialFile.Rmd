@@ -148,6 +148,64 @@ str(usedcars)
 
 ## Show some registers
 
+```{r}
+# Table of 6 first registers
+kable(head(usedcars), caption = "6 first registers of data")
+```
+
+## Exploring numeric variables
+
+```{r}
+## Exploring numeric variables -----
+
+# summarize numeric variables
+summary(usedcars$year)
+```
+```{r}
+summary(usedcars[c("price", "mileage")])
+```
+```{r}
+# calculate the mean income
+(36000 + 44000 + 56000) / 3
+```
+```{r}
+mean(c(36000, 44000, 56000))
+```
+```{r}
+# the median income
+median(c(36000, 44000, 56000))
+```
+```{r}
+# the min/max of used car prices
+range(usedcars$price)
+```
+```{r}
+# the difference of the range
+diff(range(usedcars$price))
+```
+```{r}
+# IQR for used car prices
+IQR(usedcars$price)
+```
+```{r}
+# use quantile to calculate five-number summary
+quantile(usedcars$price)
+```
+```{r}
+# the 99th percentile
+quantile(usedcars$price, probs = c(0.01, 0.99))
+```
+```{r}
+# quintiles
+quantile(usedcars$price, seq(from = 0, to = 1, by = 0.20))
+```
+
+## Table with information about mileage and price
+
+```{r}
+
+```
+
 
 
 
