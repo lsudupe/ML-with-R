@@ -5,14 +5,11 @@ date: '`r format(Sys.Date(),"%e de %B, %Y")`'
 output: 
   pdf_document:
     toc: TRUE
-    highlight: zenburn
   html_document:
     toc: TRUE
-    theme: united
-  bibliography: scholar.bib
-  csl: apa.csl
-  knit: rmarkdown::render("InitialFile.Rmd", c("pdf_document", "html_document"),
-  output_file = c("Rmarkdown.pdf","Rmarkdown.html")
+bibliography: scholar.bib
+knit: rmarkdown::render("InitialFile.Rmd", c("pdf_document", "html_document"),output_file = c("Rmarkdown.pdf","Rmarkdown.html"))
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -133,7 +130,7 @@ U.S. website.
 ...
 
 
-Since the dataset is stored in CSV form, we can use the ('read.csv()') function 
+Since the dataset is stored in CSV form, we can use the read.csv() function 
 to load the data into an R data frame:
 ```{r}
 ##### Exploring and understanding data --------------------
@@ -263,7 +260,7 @@ sd(usedcars$mileage)
 
 The **five-number summary** is a set of five statistics that roughly depict the 
 spread of a dataset. All five of the statistics are included in the output of 
-the ('summary()') function. Written in order, they are:
+the summary() function. Written in order, they are:
  
   1. Minimum (Min.)
   2. First quartile, or Q1 (1st Qu.)
@@ -275,18 +272,19 @@ the ('summary()') function. Written in order, they are:
 
 In order to calculate the standard deviation, we must first obtain the **variance**
 , which is defined as the average of the squared differences between each value 
-and the mean value. In mathematical notation, the variance of a set of ('n') 
-values of ('x') is defined by the following formula. The Greek letter ('mu') 
-(*μ*) (similar in appearance to an m) denotes the mean of the values, and the 
-variance itself is denoted by the Greek letter ('sigma') (**) squared (similar 
+and the mean value. In mathematical notation, the variance of a set of 'n' 
+values of 'x' is defined by the following formula. The Greek letter 'mu' 
+(*mu*) (similar in appearance to an m) denotes the mean of the values, and the 
+variance itself is denoted by the Greek letter 'sigma' (**) squared (similar 
 to a b turned sideways):
 
-$\Var(X) = \sigma^{2} = \frac{1}{n}\sum_{i = l}^{n} (x_{i} - \mu)^{2}$
+
+$$Var(X)=\sigma^{2}=\frac{1}{n}\sum_{i=l}^{n}(x_{i}-\mu)^{2}$$
 
 The standard deviation is the square root of the variance, and is denoted by 
-('sigma') as shown in the following formula:
+'sigma' as shown in the following formula:
 
-$\StdDev(X) = \sigma = \sqrt{(\frac{1}{n}\sum_{i = l}^{n} (x_{i} - \mu)^{2})}$
+$$StdDev(X)=\sigma=\sqrt{(\frac{1}{n}\sum_{i=l}^{n}(x_{i}-\mu)^{2})}$$
 
 *Note*. For more details on using mathematical expressions in Latex (R Markdown)
 see https://es.sharelatex.com/learn/Mathematical_expressions.
@@ -300,7 +298,9 @@ The main goal is to accomplish long-term growth as stated in Doppelhofer, Miller
 , and others (2004).
 
 
+
 # References
+
 
 [@andrieu2003introduction]
 
@@ -311,6 +311,9 @@ The main goal is to accomplish long-term growth as stated in Doppelhofer, Miller
 [@goldberg1988genetic]
 
 [@lopez1986capa]
+
+
+
 
 
 
