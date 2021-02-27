@@ -302,15 +302,14 @@ The main goal is to accomplish long-term growth as stated in Doppelhofer, Miller
 # References
 
 
-[@andrieu2003introduction]
+
+[@lopez1986capa]
 
 [@beck2000nuevo]
 
 [@doppelhofer2004determinants]
 
-[@goldberg1988genetic]
 
-[@lopez1986capa]
 
 
 
