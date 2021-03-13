@@ -1,0 +1,38 @@
+---
+title: "K-NN"
+author: "Laura Sudupe Medinilla"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output:
+  pdf_document:
+    toc: yes
+    toc_depth: 2
+  html_document:
+    toc: yes
+    toc_depth: 2
+    toc_float: yes
+bibliography: scholar.bib
+lang: en # language,  en: english (default), es: espa?ol, ca: catalan, ..
+---
+
+```{r setup, include=FALSE}
+# knitr options
+knitr::opts_chunk$set(echo = TRUE)
+
+```
+
+```{r libraries, include=FALSE}
+# Install packages
+# Load packages
+# ...
+
+library(knitr)
+```
+
+
+```{r input, include=FALSE}
+# Input / Output variables
+# Tuning parameters
+# ...
+file1 <- "usedcars.csv"
+
+```
