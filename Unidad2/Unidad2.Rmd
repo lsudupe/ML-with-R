@@ -133,10 +133,32 @@ We will use these in the next steps of training and evaluating our classifier.
 
 # Training a model on the data
 
+For the k-NN algorithm, the training phase actually involves no model building; 
+the process of training simply involves storing the input data in a structured 
+format.
+
+To classify our test instances, we will use a k-NN implementation from the ´r class´
+package, which provides a set of basic R functions for classification. 
+
+```{r}
+#install.packages("class")
+library("class")
+```
+The ´r knn()´ function in the ´r class´ package provides a standard, classic 
+implementation of the k-NN algorithm. For each instance in the test data, the 
+function will identify the K-Nearest Neighbors, using Eucledian distance, where 
+*k* is a user-specified number. The test instance is classified by taking a "vote"
+among the k-Neares Neighbors- specifically, this involves assigning the class of
+the majority of the *k* neighbors.
+```{r}
+cancer_test_pred <- knn(train = cancer_train, test = cancer_test,
+                        cl = cancer_train_labels, k = 21)
+```
+The ´r knn()´ function returns a factor vector of predicted labels for each of 
+the examples in the ´test´ dataset, which we hace assigned to ´cancer_test_pred´.
 
 
-
-
+# Evaluating model performance
 
 
 
