@@ -28,6 +28,9 @@ knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 ```
 
+# Step 1
+
+## Collect the data
 
 ```{r input, include=FALSE}
 # Input / Output variables
@@ -37,7 +40,9 @@ file1 <- "usedcars.csv"
 
 ```
 
-# Exploring and preparing the data
+# Step 2
+
+## Exploring and preparing the data
 
 Import the CSV data file to the `cancer_mama` dataframe.
 
@@ -88,7 +93,7 @@ the impact of area is going to be much larger than smoothness in the distance
 calculation. This cpuld potentially cause problems for our classifier, so let´s
 apply normalization to rescale the features to a standard range of values.
 
-# Transformation - normalizing numeric data
+## Transformation - normalizing numeric data
 
 To normalize these features, we need to create a `normalize()` function. 
 ```{r}
@@ -109,7 +114,7 @@ Check the transformation was applied correctly
 summary(cancer_mama_n[c("radius_mean", "area_mean", "smoothness_mean")])
 ```
 
-# Data preparation - creating training and test datasets
+## Data preparation - creating training and test datasets
 
 We can simulate unkown label data by dividing our data into two portions: a
 training dataset that will be used to build the k-NN model and a test dataset
@@ -131,7 +136,9 @@ cancer_test_lables <- cancer_mama[470:569, 1]
 With these code we create the vectors ´cancer_train_labels´ and ´cancer_test_labels´.
 We will use these in the next steps of training and evaluating our classifier.
 
-# Training a model on the data
+# Step 3
+
+## Training a model on the data
 
 For the k-NN algorithm, the training phase actually involves no model building; 
 the process of training simply involves storing the input data in a structured 
@@ -158,9 +165,36 @@ The ´r knn()´ function returns a factor vector of predicted labels for each of
 the examples in the ´test´ dataset, which we hace assigned to ´cancer_test_pred´.
 
 
-# Evaluating model performance
+# Step 4
 
+## Evaluating model performance
 
+We have to evaluate how well the predicted classes in the ´cancer_test_pred´ vector
+match up with the known values in the ´cancer_test_labels´ vector. From these
+we can use the ´CrossTable()´ function.
+```{r}
+#install.packages("gmodels")
+library("gmodels")
+```
+We can create a cross tabulation indicating the agreement between the two vectors.
+Specifiying ´r prop.chisq = FALSE´ will remove the unnecessary chi-square values
+from the output
+```{r}
+CrossTable(x=cancer_test_lables, y=cancer_test_pred, prop.chisq = FALSE)
+```
+The cell percentages in the table indicate the proportion of values that fall 
+into four categories.
+
+The tip-left cell indicates the **true negative** results. These 61 of 100 values
+are cases where the mass was benign and the k-NN algorithm correctly identified
+it such. 
+
+The bottom-right cell indicates the **true positive** results, where the
+classifier and the clinically determined label agree that mass is malignant. A
+total of 37 of 100 predictions were true positives.
+
+The cells falling on the other diagonal contain counts of examples where the k-NN
+appro
 
 
 
