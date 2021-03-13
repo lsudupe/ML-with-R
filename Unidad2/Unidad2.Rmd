@@ -64,3 +64,56 @@ are benign while `r table(cancer_mama$diagnosis == "M")` are malignant.
 ```{r}
 table(cancer_mama$diagnosis)
 ```
+Many R machine learning classifiers require the target feature is coded as a 
+factor, so we will recode `diagnosis` feature.
+```{r}
+cancer_mama$diagnosis <- factor(cancer_mama$diagnosis, levels = c("B", "M"),
+                                labels = c("Benign", "Malignant"))
+```
+Let´s check the `Benign` and `Malignant` percentages with `r prop.table()`
+```{r}
+round(prop.table(table(cancer_mama$diagnosi)) * 100, digits=1)
+```
+All the remaining features are numeric, they consist of three different 
+measurements of ten characteristics. We will take a closser look of three of 
+these features
+```{r}
+summary(cancer_mama[c("radius_mean", "area_mean", "smoothness_mean")])
+```
+The distance calculation for k-NN is heavily dependent upon the measurement 
+sclae of the input features. Since `smoothness_mean` ranges from `r round(min(cancer_mama$smoothness_mean), 2)` 
+to `r round(max(cancer_mama$smoothness_mean), 2)` and `area_mean` ranges from 
+`r round(min(cancer_mama$area_mean), 2)` to `r round(max(cancer_mama$area_mean), 2)`,
+the impact of area is going to be much larger than smoothness in the distance
+calculation. This cpuld potentially cause problems for our classifier, so let´s
+apply normalization to rescale the features to a standard range of values.
+
+# Transformation - normalizing numeric data
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
