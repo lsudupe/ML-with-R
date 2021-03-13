@@ -193,8 +193,21 @@ The bottom-right cell indicates the **true positive** results, where the
 classifier and the clinically determined label agree that mass is malignant. A
 total of 37 of 100 predictions were true positives.
 
-The cells falling on the other diagonal contain counts of examples where the k-NN
-appro
+The cells falling on the other diagonal contain counts of examples wher-left cell
+are **false negative** results; in this case, the predicted value was benign, but 
+the tumor was actually malignant.
+
+The top-right cell would contain the **false positive** results if there were 
+any. Model classifies a mass as malignant, but in reality it was benign.
+
+A 98 percent accuracy seems very good, we might try another iteration of the
+model to see whether we can improve the performance and reduce the number of 
+values that have been incorrectly classified, particularly because the errors 
+were dangerous false negatives.
+
+# Step 5
+
+## Improving model performance
 
 
 
