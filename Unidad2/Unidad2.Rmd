@@ -36,3 +36,31 @@ library(knitr)
 file1 <- "usedcars.csv"
 
 ```
+
+# Exploring and preparing the data
+
+Import the CSV data file to the `cancer_mama` dataframe.
+
+```{r}
+cancer_mama <- read.csv("wisc_bc_data.csv", stringsAsFactors = FALSE)
+```
+
+Using the `str(cancer_mama)`command, we can see the data structure. 
+
+```{r}
+str(cancer_mama)
+```
+We can see the stdy has `r ncol(cancer_mama)` examples and `r nrow(cancer_mama)`
+features. The first feature `id` is a unique identifier for each patient in the data, we will
+exclude it from the model.
+```{r}
+cancer_mama <- cancer_mama[-1]
+```
+
+The variable `diagnosis` is going to be our label, the oucome we hope to predict.
+This feature indicates whether the exmaple is from a benign or malignant mass.
+With the `r table()` output we can see that `r table(cancer_mama$diagnosis == 'B`)
+are benign while `r table(cancer_mama$diagnosis == "M")` are malignant.
+```{r}
+table(cancer_mama$diagnosis)
+```
