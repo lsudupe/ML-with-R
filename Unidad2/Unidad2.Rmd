@@ -209,13 +209,63 @@ were dangerous false negatives.
 
 ## Improving model performance
 
+We will attempt two simple variations on our previous classifier. First, we will
+employ an alternative method for rescaling our numeric features. Second, we will
+try several different values for *k*.
 
+## Transformation - z-score standardization
 
+The z-score standardized values have no predefined minimun and maximum, extreme 
+values are not compressed towards the center. One might suspect that with a 
+malignant tumor, we might see some very extreme outliers as the tumors grow 
+uncontrollably. It might, therefore, be reasonable to allow the outliers to be 
+weighted more heavily in the distance calculation. 
 
+Let´s see whether z-score standardization can improve our predictive accuracy.
 
+To standardize a vector, we can use the ´r scale()´ function, which rescales 
+values using the z-score standardization. The ´r scale()´ function offers the
+additional benefit that it can be applied directly to a data frame, so we can
+avoid the use of the ´r lapply()´ function. 
+```{r}
+cancer_z <- as.data.frame(scale(cancer_mama[-1]))
+```
 
+This command rescales all the features, with the exception of ´diagnosis´ and 
+stores the result as the ´cancer_z´ dataframe. 
 
+Check the transformation
+```{r}
+summary(cancer_z$area_mean)
+```
 
+The mean of a z-score standardized variable should always be zero, and the range
+should ne fairly compact. A z-score greater than 3 or less than -3 indicates an
+extremely rare value. With this in mind, the trasformation seems to have worked.
+
+As we had done earlier, we need to divide the data into training and test sets, 
+and the classify the test instances using the ´r knn()´ function. We´ll then 
+compare the predicted labels to the actual labels using ´r CrossTable()´
+```{r}
+cancer_z_train <- cancer_z[1:469, ]
+cancer_z_test <- cancer_z[470:569, ]
+```
+
+```{r}
+cancer_z_test_pred <- knn(train = cancer_z_train, test = cancer_z_test,
+                          cl= cancer_train_labels, k = 21)
+```
+
+```{r}
+CrossTable(x= cancer_test_lables, y=cancer_z_test_pred,
+           prop.chisq = FALSE)
+```
+the results of the new transformation show a slight decline in accuracy. The 
+instances where we had correctly classified 98 percent of examples previously,
+we classified only 95 percent correctly this time. Also, we have more **false negative**
+so we didn´t better at classifying the dangerous false negatives.
+
+## Testing alternative values of k
 
 
 
