@@ -109,6 +109,29 @@ Check the transformation was applied correctly
 summary(cancer_mama_n[c("radius_mean", "area_mean", "smoothness_mean")])
 ```
 
+# Data preparation - creating training and test datasets
+
+We can simulate unkown label data by dividing our data into two portions: a
+training dataset that will be used to build the k-NN model and a test dataset
+that will be used to estimate the predictive accuracy of the model. We will use
+the first 469 records for the training dataset and the remaining 100 to simulate
+new patients.We can do these because the data is already randomly ordered.
+```{r}
+cancer_train <- cancer_mama_n[1:469,]
+cancer_test <- cancer_mama_n[470:569,]
+```
+
+The next step is to exclude the target variable ´diagnosis´. For training the 
+k--NN model, we will need to store these class labels in factor vectors, split 
+between the training and test datasets
+```{r}
+cancer_train_labels <- cancer_mama[1:469, 1]
+cancer_test_lables <- cancer_mama[470:569, 1]
+```
+With these code we create the vectors ´cancer_train_labels´ and ´cancer_test_labels´.
+We will use these in the next steps of training and evaluating our classifier.
+
+# Training a model on the data
 
 
 
