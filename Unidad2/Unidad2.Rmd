@@ -90,9 +90,24 @@ apply normalization to rescale the features to a standard range of values.
 
 # Transformation - normalizing numeric data
 
-
-
-
+To normalize these features, we need to create a `normalize()` function. 
+```{r}
+normalize <- function(x) {
+  return ((x - min(x)) / (max(x) - min(x)))
+}
+```
+The ´lapply()´ function take a list and applies a specified function to each list 
+element. As a data frame is a list of equal-length vectors, we can use ´lapply()´
+to apply ´normalize()´ to each feature in the data frame. The final step is to 
+convert the list returned by `lapply()` to a data frame, using the ´as.data.frame()´
+function
+```{r}
+cancer_mama_n <-as.data.frame(lapply(cancer_mama[2:31], normalize))
+```
+Check the transformation was applied correctly
+```{r}
+summary(cancer_mama_n[c("radius_mean", "area_mean", "smoothness_mean")])
+```
 
 
 
