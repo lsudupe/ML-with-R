@@ -4,14 +4,10 @@ author: "Laura Sudupe Medinilla"
 date: '`r format(Sys.Date(),"%e de %B, %Y")`'
 output:
   pdf_document:
-    toc: yes
-    toc_depth: 2
+    toc: TRUE
   html_document:
-    toc: yes
-    toc_depth: 2
-    toc_float: yes
-bibliography: scholar.bib
-lang: en # language,  en: english (default), es: espa?ol, ca: catalan, ..
+    toc: TRUE
+knit: rmarkdown::render("Unidad2.Rmd", c("pdf_document", "html_document"),output_file = c("Unidad2.pdf","Unidad2.html"))
 ---
 
 ```{r setup, include=FALSE}
@@ -54,7 +50,7 @@ The strengths and weaknesses of this algorithm are as follows:
 
 ## Collect the data
 
-```{r input, include=FALSE}
+```{r input, include=TRUE}
 # Input / Output variables
 # Tuning parameters
 # ...
@@ -86,8 +82,7 @@ cancer_mama <- cancer_mama[-1]
 
 The variable `diagnosis` is going to be our label, the oucome we hope to predict.
 This feature indicates whether the exmaple is from a benign or malignant mass.
-With the `r table()` output we can see that `r table(cancer_mama$diagnosis == 'B`)
-are benign while `r table(cancer_mama$diagnosis == "M")` are malignant.
+With the `table()` output we can see that 357 are benign while 212 are malignant.
 ```{r}
 table(cancer_mama$diagnosis)
 ```
@@ -97,7 +92,7 @@ factor, so we will recode `diagnosis` feature.
 cancer_mama$diagnosis <- factor(cancer_mama$diagnosis, levels = c("B", "M"),
                                 labels = c("Benign", "Malignant"))
 ```
-Let´s check the `Benign` and `Malignant` percentages with `r prop.table()`
+Let´s check the `Benign` and `Malignant` percentages with `prop.table()`
 ```{r}
 round(prop.table(table(cancer_mama$diagnosi)) * 100, digits=1)
 ```
@@ -123,10 +118,10 @@ normalize <- function(x) {
   return ((x - min(x)) / (max(x) - min(x)))
 }
 ```
-The ´lapply()´ function take a list and applies a specified function to each list 
-element. As a data frame is a list of equal-length vectors, we can use ´lapply()´
+The `lapply()` function take a list and applies a specified function to each list 
+element. As a data frame is a list of equal-length vectors, we can use `lapply()`
 to apply ´normalize()´ to each feature in the data frame. The final step is to 
-convert the list returned by `lapply()` to a data frame, using the ´as.data.frame()´
+convert the list returned by `lapply()` to a data frame, using the`as.data.frame()`
 function
 ```{r}
 cancer_mama_n <-as.data.frame(lapply(cancer_mama[2:31], normalize))
@@ -148,14 +143,14 @@ cancer_train <- cancer_mama_n[1:469,]
 cancer_test <- cancer_mama_n[470:569,]
 ```
 
-The next step is to exclude the target variable ´diagnosis´. For training the 
+The next step is to exclude the target variable `diagnosis`. For training the 
 k--NN model, we will need to store these class labels in factor vectors, split 
 between the training and test datasets
 ```{r}
 cancer_train_labels <- cancer_mama[1:469, 1]
 cancer_test_lables <- cancer_mama[470:569, 1]
 ```
-With these code we create the vectors ´cancer_train_labels´ and ´cancer_test_labels´.
+With these code we create the vectors `cancer_train_labels` and `cancer_test_labels`.
 We will use these in the next steps of training and evaluating our classifier.
 
 # Step 3
@@ -166,14 +161,14 @@ For the k-NN algorithm, the training phase actually involves no model building;
 the process of training simply involves storing the input data in a structured 
 format.
 
-To classify our test instances, we will use a k-NN implementation from the ´r class´
+To classify our test instances, we will use a k-NN implementation from the `class()`
 package, which provides a set of basic R functions for classification. 
 
 ```{r}
 #install.packages("class")
 library("class")
 ```
-The ´r knn()´ function in the ´r class´ package provides a standard, classic 
+The `knn()` function in the ´r class´ package provides a standard, classic 
 implementation of the k-NN algorithm. For each instance in the test data, the 
 function will identify the K-Nearest Neighbors, using Eucledian distance, where 
 *k* is a user-specified number. The test instance is classified by taking a "vote"
@@ -183,23 +178,23 @@ the majority of the *k* neighbors.
 cancer_test_pred <- knn(train = cancer_train, test = cancer_test,
                         cl = cancer_train_labels, k = 21)
 ```
-The ´r knn()´ function returns a factor vector of predicted labels for each of 
-the examples in the ´test´ dataset, which we hace assigned to ´cancer_test_pred´.
+The `knn()` function returns a factor vector of predicted labels for each of 
+the examples in the test dataset, which we hace assigned to `cancer_test_pred`.
 
 
 # Step 4
 
 ## Evaluating model performance
 
-We have to evaluate how well the predicted classes in the ´cancer_test_pred´ vector
-match up with the known values in the ´cancer_test_labels´ vector. From these
-we can use the ´CrossTable()´ function.
+We have to evaluate how well the predicted classes in the `cancer_test_pred` vector
+match up with the known values in the `cancer_test_labels` vector. From these
+we can use the `CrossTable()` function.
 ```{r}
 #install.packages("gmodels")
 library("gmodels")
 ```
 We can create a cross tabulation indicating the agreement between the two vectors.
-Specifiying ´r prop.chisq = FALSE´ will remove the unnecessary chi-square values
+Specifiying `r prop.chisq = FALSE` will remove the unnecessary chi-square values
 from the output
 ```{r}
 CrossTable(x=cancer_test_lables, y=cancer_test_pred, prop.chisq = FALSE)
@@ -245,16 +240,16 @@ weighted more heavily in the distance calculation.
 
 Let´s see whether z-score standardization can improve our predictive accuracy.
 
-To standardize a vector, we can use the ´r scale()´ function, which rescales 
-values using the z-score standardization. The ´r scale()´ function offers the
+To standardize a vector, we can use the `scale()` function, which rescales 
+values using the z-score standardization. The `scale()` function offers the
 additional benefit that it can be applied directly to a data frame, so we can
-avoid the use of the ´r lapply()´ function. 
+avoid the use of the `lapply()` function. 
 ```{r}
 cancer_z <- as.data.frame(scale(cancer_mama[-1]))
 ```
 
-This command rescales all the features, with the exception of ´diagnosis´ and 
-stores the result as the ´cancer_z´ dataframe. 
+This command rescales all the features, with the exception of `diagnosis` and 
+stores the result as the `cancer_z` dataframe. 
 
 Check the transformation
 ```{r}
@@ -266,8 +261,8 @@ should ne fairly compact. A z-score greater than 3 or less than -3 indicates an
 extremely rare value. With this in mind, the trasformation seems to have worked.
 
 As we had done earlier, we need to divide the data into training and test sets, 
-and the classify the test instances using the ´r knn()´ function. We´ll then 
-compare the predicted labels to the actual labels using ´r CrossTable()´
+and the classify the test instances using the `knn()` function. We´ll then 
+compare the predicted labels to the actual labels using `CrossTable()`
 ```{r}
 cancer_z_train <- cancer_z[1:469, ]
 cancer_z_test <- cancer_z[470:569, ]
@@ -293,8 +288,22 @@ We are going to examine the performance of various *k* values. Using the
 normalized training and test datasets, the same 100 records were classified 
 using several different *k* values. 
 
+```{r, echo=FALSE}
+table <- matrix(c(1,1,3,"4 percent",5,2,0,"2 percent",11,3,0,"3 percent",
+                  15,3,0,"3 perent",21,2,0,"2 percent",
+                  27,4,0,"4 percent"),ncol=4,byrow=TRUE)
+colnames(table) <- c("k value","False negatives","False positives", 
+                     "Percent classified incorrectly")
+table <- as.table(table)
 
+kable(table)
+```
 
+The classifier is never perfect, the 1-NN approach was able to avoid some of the
+false negatives at the expense of adding false positives. It is important to keep
+in mind, that it would be unwise to tailor our approach too closely to or test 
+data; after all, a different set of 100 patient records is likely to be somewhat
+different from those used to measure our performance.
 
 
 
