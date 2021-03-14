@@ -28,6 +28,28 @@ knitr::opts_chunk$set(echo = TRUE)
 library(knitr)
 ```
 
+
+# Introduction
+
+In this markdown we are going to learn about classification using k-NN. Unlike
+many classification algorithms, k-NN does not do any learning. It simply stores 
+the training data verbatim. Unlabeled test examples are then matched to the most 
+similar records in the training set usin a distance function, and the unlabeled
+example is assignaed the label of its neighbors.
+
+The strengths and weaknesses of this algorithm are as follows:
+
+| strengths                                                     | weaknesses                                                                                               |
+|---------------------------------------------------------------|----------------------------------------------------------------------------------------------------------|
+| • Simple and effective                                        | • Does not produce a model, limiting the ability to understand how the features are related to the class |
+| • Makes no assumptions about the underlying data distribution | • Requires selection of an appropriate k                                                                 |
+| • Fast training phase                                         | • Slow classification phase                                                                              |
+|                                                               | • Nominal features and missing data require additional processing                                        |
+
+
+
+
+
 # Step 1
 
 ## Collect the data
@@ -267,7 +289,9 @@ so we didn´t better at classifying the dangerous false negatives.
 
 ## Testing alternative values of k
 
-
+We are going to examine the performance of various *k* values. Using the 
+normalized training and test datasets, the same 100 records were classified 
+using several different *k* values. 
 
 
 
