@@ -1,0 +1,23 @@
+---
+title: "K-NN"
+author: "Laura Sudupe Medinilla"
+date: '`r format(Sys.Date(),"%e de %B, %Y")`'
+output:
+  pdf_document:
+    toc: TRUE
+  html_document:
+    toc: TRUE
+knit: rmarkdown::render("Unidad2.Rmd", c("pdf_document", "html_document"),output_file = c("Unidad2.pdf","Unidad2.html"))
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL)
+```
+
+```{r load_libraries, include=FALSE}
+require(knitr)
+require(class)
+```
+
+
+
