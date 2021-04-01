@@ -7,7 +7,7 @@ output:
     toc: TRUE
   html_document:
     toc: TRUE
-knit: rmarkdown::render("Unidad2.Rmd", c("pdf_document", "html_document"),output_file = c("Unidad2.pdf","Unidad2.html"))
+knit: rmarkdown::render("PEC1: Algorithm K-NN", c("pdf_document", "html_document"),output_file = c("PEC1: Algorithm K-NN","PEC1: Algorithm K-NN"))
 ---
 
 ```{r setup, include=FALSE}
@@ -44,6 +44,24 @@ We will utilize the "Protein Secondary Structure" from the Brookhaven National L
 
 
 ```{r data, include=FALSE}
-aminofirst <- read.csv("data4.csv", stringsAsFactors = TRUE)
-amino <- read.csv("oh_enc.csv", stringsAsFactors = FALSE)
+amino <- read.csv("data4.csv", head=TRUE, sep=";")
+amino_one_hot <- read.csv("oh_enc.csv", stringsAsFactors = FALSE)
 ```
+
+
+# Step 2 - Exploring and preparing the data
+
+We are going to take a look to our data with 'str(amino)'
+```{r, echo=FALSE}
+str(amino, list.len=6)
+```
+
+
+
+
+
+
+
+
+
+
