@@ -78,17 +78,17 @@ We are going to divide our data into two portions: a training dataset that will 
 ```{r}
 set.seed(123)
 
-#create our test/train labels
-sample <- sample.split(amino,SplitRatio = 0.67)
+train_indx <- sample(x= 1:nrow(amino_one_hot),
+                     size= 0.67*nrow(amino_one_hot),
+                     replace=FALSE)
+train_data <- amino_one_hot[train_indx,]
+test_data <- amino_one_hot[-train_indx,]
 
-train_label <- subset(amino$V18, sample == TRUE)
-test_label <- subset(amino$v18, sample == FALSE)
-
-#create training and test data
-sample2 <- sample.split(amino_one_hot,SplitRatio = 0.67)
-
-train_data <- subset(amino_one_hot, sample2 == TRUE)
-test_data <- subset(amino_one_hot, sample2 == FALSE)
+label_train_idx <- sample(x=1:nrow(amino),
+                          size=0.67*nrow(amino),
+                          replace= FALSE)
+train_label <- amino$V18[label_train_idx]
+test_label <- amino$V18[-label_train_idx]
 
 
 ```
@@ -97,6 +97,10 @@ test_data <- subset(amino_one_hot, sample2 == FALSE)
 # Step 3 - Training a model on the data
 
 For the classification, we will use a kNN implementation from the `class` package. We use the `knn()` function to classify the test data
+```{r}
+amino_test_pred <- knn(train= train_data, test= test_data,
+                       cl=train_label, k=77)
+```
 
 
 
