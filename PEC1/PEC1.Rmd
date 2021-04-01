@@ -44,7 +44,7 @@ We will utilize the "Protein Secondary Structure" from the Brookhaven National L
 
 
 ```{r data, include=FALSE}
-amino <- read.csv("data4.csv", head=TRUE, sep=";")
+amino <- read.csv("data4.csv", head=TRUE, sep= ";")
 amino_one_hot <- read.csv("oh_enc.csv", stringsAsFactors = FALSE)
 ```
 
@@ -60,9 +60,37 @@ The data is structured with `r nrow(amino)` sequences with `r ncol(amino)` amino
 ```{r}
 table(amino$V18)
 ```
+We can label the data and check the structure porcentages with `prop.table()`
+```{r}
+amino$V18 <- factor(amino$V18, levels = c("_", "e", "h"),
+              labels=c("coil","beta-sheet","alpha-sheet"))
+round(prop.table(table(amino$V18)) * 100, digits = 1)
+```
+## Data preparation 
+
+### One-hot transformation 
+
+### Creating training and test datasets
+
+We are going to divide our data into two portions: a training dataset that will be used to build the KNN model and a test dataset that will be used to estimate the predictive accuracy of the model. 
+```{r}
+#create training and test data
+amino_train <- amino_one_hot[1:6700, ]
+amino_test <- amino_one_hot[6701:10000, ]
+```
 
 
 
+
+
+
+
+
+# Step 3 - Training a model on the data
+
+# Step 4 - Evaluating model performance
+
+# 
 
 
 
