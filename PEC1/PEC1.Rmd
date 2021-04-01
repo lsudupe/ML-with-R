@@ -51,9 +51,14 @@ amino_one_hot <- read.csv("oh_enc.csv", stringsAsFactors = FALSE)
 
 # Step 2 - Exploring and preparing the data
 
-We are going to take a look to our data with 'str(amino)'
+We are going to take a look to our data with `str(amino)`. 
 ```{r, echo=FALSE}
 str(amino, list.len=6)
+```
+The data is structured with `r nrow(amino)` sequences with `r ncol(amino)` amino acids. We want to see which is the central amino acid structure type. The `table()` output indicates that `r as.numeric(table(amino$V18))[1]` aminos has **coil** structure, `r as.numeric(table(amino$V18))[2]` has **beta-sheet** structure and `r as.numeric(table(amino$V18))[3]` has **alpha-helix** structure.
+
+```{r}
+table(amino$V18)
 ```
 
 
