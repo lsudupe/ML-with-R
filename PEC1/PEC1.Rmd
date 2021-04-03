@@ -221,6 +221,82 @@ kable(resum2, col.names=c("k value", "# false negatives",
       align= c("l","c","c","c"))
 
 ```
+The Receiver Operating Characteristic curve is ussed to examine the trade-off between the detection of true positives, whiile avoiding the false positives. we are goint to calculate de AUC from all the k
+
+```{r}
+# ROC and AUC for k=1
+aminocoil_test_pred1 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=1,prob = TRUE)
+prob1 <- attr(aminocoil_test_pred1, "prob")
+labels1 <- factor(test_label_coil, labels = c(0,1))
+
+roc1 <- pROC::roc(labels1, prob1, auc= TRUE, ci=TRUE)
+print(roc1)
+
+pROC::plot.roc( roc1, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
+          auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
+          col = 2, grid = TRUE )
+
+```
+
+
+```{r}
+# ROC and AUC for k=3
+aminocoil_test_pred3 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=3,prob = TRUE)
+prob3 <- attr(aminocoil_test_pred3, "prob")
+labels3 <- factor(test_label_coil, labels = c(0,1))
+
+roc3 <- pROC::roc(labels3, prob3, auc= TRUE, ci=TRUE)
+print(roc3)
+
+pROC::plot.roc( roc3, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
+          auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
+          col = 2, grid = TRUE )
+```
+
+```{r}
+# ROC and AUC for k=5
+aminocoil_test_pred5 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=5,prob = TRUE)
+prob5 <- attr(aminocoil_test_pred5, "prob")
+labels5 <- factor(test_label_coil, labels = c(0,1))
+
+roc5 <- pROC::roc(labels5, prob5, auc= TRUE, ci=TRUE)
+print(roc5)
+
+pROC::plot.roc( roc5, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
+          auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
+          col = 2, grid = TRUE )
+```
+
+
+```{r}
+# ROC and AUC for k=7
+aminocoil_test_pred7 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=7,prob = TRUE)
+prob7 <- attr(aminocoil_test_pred7, "prob")
+labels7 <- factor(test_label_coil, labels = c(0,1))
+
+roc7 <- pROC::roc(labels7, prob7, auc= TRUE, ci=TRUE)
+print(roc7)
+
+pROC::plot.roc( roc7, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
+          auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
+          col = 2, grid = TRUE )
+```
+
+```{r}
+# ROC and AUC for k=11
+aminocoil_test_pred11 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=11,prob = TRUE)
+prob11 <- attr(aminocoil_test_pred11, "prob")
+labels11 <- factor(test_label_coil, labels = c(0,1))
+
+roc11 <- pROC::roc(labels11, prob11, auc= TRUE, ci=TRUE)
+print(roc11)
+
+pROC::plot.roc( roc11, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
+          auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
+          col = 2, grid = TRUE )
+```
+
+
 
 
 
