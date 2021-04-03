@@ -102,6 +102,7 @@ amino_test_pred <- knn(train= train_data, test= test_data,
                        cl=train_label, k=77)
 ```
 
+The `knn()` function returns a factor vector of predicted labels for each of the examples in the test dataset, which we have assigned to `amino_test_pred`.
 
 
 # Step 4 - Evaluating model performance
