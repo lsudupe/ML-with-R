@@ -19,7 +19,13 @@ require(knitr)
 require(class)
 require(caret)
 require(caTools)
+require(gmodels)
 ```
+
+```{r}
+install.packages("gmodels")
+```
+
 
 # The kNN Algorithm
 
@@ -99,7 +105,8 @@ test_label <- amino$V18[-label_train_idx]
 For the classification, we will use a kNN implementation from the `class` package. We use the `knn()` function to classify the test data
 ```{r}
 amino_test_pred <- knn(train= train_data, test= test_data,
-                       cl=train_label, k=77)
+                       cl=train_label, k=21)
+
 ```
 
 The `knn()` function returns a factor vector of predicted labels for each of the examples in the test dataset, which we have assigned to `amino_test_pred`.
@@ -107,10 +114,45 @@ The `knn()` function returns a factor vector of predicted labels for each of the
 
 # Step 4 - Evaluating model performance
 
-# 
+We need to evaluate how well the predicted classes in the `amino_test_pred` vector match up with the known values in the `test_label` vector.
+To these purpose, we can use the `CrossTable()` function. We will create a cross tabulation indicating the agreement between two vectors.
 
 
+```{r}
+CrossTable(x=test_label, y=amino_test_pred, prop.chisq=FALSE)
+```
+The cell percentage in the table indicate the portion of values that fall into four categories. In the top-left, these `r conf.mat$t[1,1]` of `r sum(conf.mat$t)`, cell we have the number of values the KNN algorithm correctly identified as coil. In the diagonal we have the true posiive values, for example, these `r conf.mat$t[3,3]` of `r sum(conf.mat$t)`, shows values the KNN correctly identified as alpha-sheet.
 
+In the case of `r conf.mat$t[2,1]` examples are false negatives, the predicted value were coil but the structure were beta-sheet. The same happens with `r conf.mat$t[3,1]` of `r sum(conf.mat$t)`, the predicted values were coil but the structure were alpha-sheet. 
+
+On the other side, a total of `r conf.mat$t[2,3]` out of `r sum(conf.mat$t)` were incorrectly classified by the KNN algorithm like alpha-sheet.
+
+
+# Step 5 - Improving the model performance
+
+We will try several different values for **k**, (k = 1, 3, 5, 7, 11), to examine the performance. Using the previous test and training datasets, the same `r tr` records were classified. The number of false negatives and false positives are shown for each iteration.
+
+```{r, include=FALSE}
+
+ks <- c(1, 3, 5, 7, 11)
+resum <- data.frame(ks, FN=NA, FP=NA, mal_clas=NA)
+
+j <- 0
+for (i in ks){
+  j <- j +1
+  amino_test_pred <- knn(train = train_data, test = test_data, cl = train_label, k=i)
+  conf.mat <- CrossTable(x = test_label, y = amino_test_pred, prop.chisq=FALSE)
+  
+  resum[j,2:4] <- c(conf.mat$t[2,1], conf.mat$t[1,2], ((conf.mat$t[1,2]+conf.mat$t[2,1])/sum(conf.mat$t))*100)
+}
+
+```
+
+```{r, echo=FALSE}
+kable(resum, col.names=c("k value", "# false negatives", 
+      "# false positives", "% classified Incorrectly"),
+      align= c("l","c","c","c"))
+```
 
 
 
