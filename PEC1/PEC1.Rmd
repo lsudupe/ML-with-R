@@ -22,10 +22,11 @@ require(caTools)
 require(gmodels)
 require(base)
 require(data.table)
+require(ROCR)
 ```
 
 ```{r}
-install.packages("data.table")
+install.packages("ROCR")
 ```
 
 
@@ -79,6 +80,17 @@ round(prop.table(table(amino$V18)) * 100, digits = 1)
 ## Data preparation 
 
 ### One-hot transformation 
+
+The KNN algorithm need the distances between values, so we are going to transform the data with **one-hot** codification
+
+```{r}
+aminonum <- 
+```
+
+
+
+
+
 
 ### Creating training and test datasets
 
@@ -224,9 +236,28 @@ kable(resum2, col.names=c("k value", "# false negatives",
 The Receiver Operating Characteristic curve is ussed to examine the trade-off between the detection of true positives, whiile avoiding the false positives. we are goint to calculate de AUC from all the k
 
 ```{r}
+knn_isolet <- class::knn(train_data_coil, test_data_coil, train_label_coil, k=1, prob=TRUE)
+prob <- attr(knn_isolet, "prob")
+prob <- 2*ifelse(knn_isolet == "-1", 1-prob, prob) - 1
+
+pred_knn <- prediction(prob, train_label_coil)
+pred_knn <- performance(pred_knn, "tpr", "fpr")
+plot(pred_knn, avg= "threshold", colorize=T, lwd=3, main="Voilà, a ROC curve!")
+```
+
+
+
+
+
+
+
+```{r}
 # ROC and AUC for k=1
 aminocoil_test_pred1 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=1,prob = TRUE)
 prob1 <- attr(aminocoil_test_pred1, "prob")
+prob1 <- 2*ifelse(aminocoil_test_pred1 == "-1", 1-prob1, prob1) - 1
+
+
 labels1 <- factor(test_label_coil, labels = c(0,1))
 
 roc1 <- pROC::roc(labels1, prob1, auc= TRUE, ci=TRUE)
