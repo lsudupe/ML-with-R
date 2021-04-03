@@ -20,10 +20,12 @@ require(class)
 require(caret)
 require(caTools)
 require(gmodels)
+require(base)
+require(data.table)
 ```
 
 ```{r}
-install.packages("gmodels")
+install.packages("data.table")
 ```
 
 
@@ -153,6 +155,48 @@ kable(resum, col.names=c("k value", "# false negatives",
       "# false positives", "% classified Incorrectly"),
       align= c("l","c","c","c"))
 ```
+The 11NN aproach was able yo avoid a lot of false positives at the expense of adding false negatives. In these cases, the 1NN aproach has the higher porcentage os classified incorrectly.
+
+
+
+# Step 7 - Prove our KNN classifier with different labels
+
+
+We know the alpha-helix and beta-sheet are both non-coil structures. We are going to performe the same algorithm for these labels.
+
+```{r}
+# copy amino dataframe 
+aminocoil <- copy(amino)
+
+#re-label and check the porcentages
+
+aminocoil$V18 <- factor(amino$V18, levels = c("coil", "beta-sheet", "alpha-sheet"),
+              labels=c("coil","no-coil","no-coil"))
+
+round(prop.table(table(aminocoil$V18)) * 100, digits = 1)
+
+
+```
+
+```{r}
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
