@@ -178,23 +178,49 @@ round(prop.table(table(aminocoil$V18)) * 100, digits = 1)
 
 ```
 
+## Creating training and test datasets
+
+We are going to divide our data into two portions: a training dataset that will be used to build the KNN model and a test dataset that will be used to estimate the predictive accuracy of the model. 
+
+
 ```{r}
+set.seed(123)
+
+train_indx_coil <- sample(x= 1:nrow(amino_one_hot),
+                     size= 0.67*nrow(amino_one_hot),
+                     replace=FALSE)
+train_data_coil <- amino_one_hot[train_indx,]
+test_data_coil <- amino_one_hot[-train_indx,]
+
+label_train_idx_coil <- sample(x=1:nrow(aminocoil),
+                          size=0.67*nrow(aminocoil),
+                          replace= FALSE)
+train_label_coil <- aminocoil$V18[label_train_idx_coil]
+test_label_coil <- aminocoil$V18[-label_train_idx_coil]
+```
+
+```{r, include=FALSE}
+
+ks2 <- c(1, 3, 5, 7, 11)
+resum2 <- data.frame(ks2, FN=NA, FP=NA, mal_clas=NA)
+
+j <- 0
+for (i in ks2){
+  j <- j +1
+  aminocoil_test_pred <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=i)
+  conf.mat2 <- CrossTable(x = test_label_coil, y = aminocoil_test_pred, prop.chisq=FALSE)
+  
+  resum2[j,2:4] <- c(conf.mat2$t[2,1], conf.mat2$t[1,2], ((conf.mat2$t[1,2]+conf.mat2$t[2,1])/sum(conf.mat2$t))*100)
+}
 
 ```
 
+```{r, echo=FALSE}
+kable(resum2, col.names=c("k value", "# false negatives", 
+      "# false positives", "% classified Incorrectly"),
+      align= c("l","c","c","c"))
 
-
-
-
-
-
-
-
-
-
-
-
-
+```
 
 
 
