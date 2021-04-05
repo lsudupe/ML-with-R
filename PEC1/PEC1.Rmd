@@ -7,7 +7,7 @@ output:
     toc: TRUE
   html_document:
     toc: TRUE
-knit: rmarkdown::render("PEC1: Algorithm K-NN", c("pdf_document", "html_document"),output_file = c("PEC1: Algorithm K-NN","PEC1: Algorithm K-NN"))
+knit: rmarkdown::render("PEC1.Rmd", c("pdf_document", "html_document"),output_file = c("PEC1.pdf","PEC1.html"))
 ---
 
 ```{r setup, include=FALSE}
@@ -23,6 +23,11 @@ require(gmodels)
 require(base)
 require(data.table)
 require(ROCR)
+```
+
+
+```{r asignaciones, include=FALSE}
+myfile <-"data4.csv"
 ```
 
 
@@ -48,6 +53,11 @@ The strengths and weaknesses of this algorithm are as follows:
 # Step 1 - Collecting data
 
 We will utilize the "Protein Secondary Structure" from the Brookhaven National Laboratory (USA).This data includes the protein secondary structures from 101 representative proteins.
+
+```{r, echo=FALSE}
+# import the CSV file
+amino <- read.csv(myfile, head=TRUE, sep= ";")
+```
 
 
 ```{r data, include=FALSE}
@@ -75,19 +85,6 @@ round(prop.table(table(amino$V18)) * 100, digits = 1)
 ```
 ## Data preparation 
 
-### One-hot transformation 
-
-The KNN algorithm need the distances between values, so we are going to transform the data with **one-hot** codification
-
-```{r}
-aminonum <- 
-```
-
-
-
-
-
-
 ### Creating training and test datasets
 
 We are going to divide our data into two portions: a training dataset that will be used to build the KNN model and a test dataset that will be used to estimate the predictive accuracy of the model. 
@@ -104,7 +101,6 @@ train_indx <- sample(x= 1:nrow(data),
 
 train_data <- data[train_indx,-ncol(data)]
 test_data <- data[-train_indx,-ncol(data)]
-
 
 train_label <- data[train_indx, ncol(data)]
 test_label <- data[-train_indx, ncol(data)]
@@ -133,16 +129,15 @@ To these purpose, we can use the `CrossTable()` function. We will create a cross
 ```{r}
 CrossTable(x=test_label, y=amino_test_pred, prop.chisq=FALSE)
 ```
-The cell percentage in the table indicate the portion of values that fall into four categories. In the top-left, these `r conf.mat$t[1,1]` of `r sum(conf.mat$t)`, cell we have the number of values the KNN algorithm correctly identified as coil. In the diagonal we have the true posiive values, for example, these `r conf.mat$t[3,3]` of `r sum(conf.mat$t)`, shows values the KNN correctly identified as alpha-sheet.
+The cell percentage in the table indicate the portion of values that fall into four categories. In the top-left, these  of , cell we have the number of values the KNN algorithm correctly identified as coil. In the diagonal we have the true posiive values, for example, these   of  , shows values the KNN correctly identified as alpha-sheet.
+In the case of  examples are false negatives, the predicted value were coil but the structure were beta-sheet. The same happens with  of  the predicted values were coil but the structure were alpha-sheet. 
 
-In the case of `r conf.mat$t[2,1]` examples are false negatives, the predicted value were coil but the structure were beta-sheet. The same happens with `r conf.mat$t[3,1]` of `r sum(conf.mat$t)`, the predicted values were coil but the structure were alpha-sheet. 
-
-On the other side, a total of `r conf.mat$t[2,3]` out of `r sum(conf.mat$t)` were incorrectly classified by the KNN algorithm like alpha-sheet.
+On the other side, a total of  out of ` were incorrectly classified by the KNN algorithm like alpha-sheet.
 
 
 # Step 5 - Improving the model performance
 
-We will try several different values for **k**, (k = 1, 3, 5, 7, 11), to examine the performance. Using the previous test and training datasets, the same `r tr` records were classified. The number of false negatives and false positives are shown for each iteration.
+We will try several different values for **k**, (k = 1, 3, 5, 7, 11), to examine the performance. Using the previous test and training datasets, the same  records were classified. The number of false negatives and false positives are shown for each iteration.
 
 ```{r, include=FALSE}
 
@@ -167,13 +162,21 @@ kable(resum, col.names=c("k value", "# false negatives",
 ```
 The 11NN aproach was able yo avoid a lot of false positives at the expense of adding false negatives. In these cases, the 1NN aproach has the higher porcentage os classified incorrectly.
 
+Let's see some other values
+
+
+
+```{r}
+confusionMatrix(amino_test_pred, test_label, positive = "coil" )
+```
+
+The kappa value adjusts accuracy by acounting for the possibility of a correct prediction by chance alone. We have a fair agreement kappa value, and big error rate, these indicated us the proportion of the incorrectly classified examples.
 
 
 # Step 7 - Prove our KNN classifier with different labels
 
 
 We know the alpha-helix and beta-sheet are both non-coil structures. We are going to performe the same algorithm for these labels.
-
 
 ```{r}
 data_coil <- cbind(amino_one_hot, amino[,ncol(amino)])
@@ -183,6 +186,7 @@ data_coil$V341 <- factor(data_coil$V341, levels = c( "beta-sheet", "alpha-sheet"
               labels=c("no-coil","no-coil","coil"))
 
 ```
+
 
 ```{r}
 table(data_coil$V341)
@@ -259,30 +263,58 @@ roc11 <- pROC::roc(labels11, prob11, auc= TRUE, ci=TRUE)
 
 
 ```
-```{r}
+```{r, echo=FALSE}
 #ROC plots
 
 par(mfrow=c(2,3))
 pROC::plot.roc( roc1, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
           auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
-          col = 2, grid = TRUE )
+          col = 2, grid = TRUE , main= "ROC with k=1")
 
 pROC::plot.roc( roc3, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
           auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
-          col = 2, grid = TRUE )
+          col = 2, grid = TRUE, main= "ROC with k=3" )
 
 pROC::plot.roc( roc5, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
           auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
-          col = 2, grid = TRUE )
+          col = 2, grid = TRUE, main= "ROC with k=5" )
 
 pROC::plot.roc( roc7, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
           auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
-          col = 2, grid = TRUE )
+          col = 2, grid = TRUE,  main= "ROC with k=7")
 
 pROC::plot.roc( roc11, legacy.axes = TRUE, print.thres = "best", print.auc = TRUE,
           auc.polygon = FALSE, max.auc.polygon = FALSE, auc.polygon.col="gainsboro",
-          col = 2, grid = TRUE )
+          col = 2, grid = TRUE, , main= "ROC with k=11" )
 
+```
+
+The perfect classifier has a curve that passes through the point at a 100 percent true positive rate and 0 percent false positive rate. The closer the curve is to the perfect classifier, the better it is at identifying positive values. This measured using a statistic known as the *area under the ROC curve* (abbreviated *AUC*). The best AUC value it was 1NN classifier, next 3NN and the others are similar between them.
+
+
+
+
+
+```{r, include=FALSE}
+
+ks <- c(1, 3, 5, 7, 11)
+resum <- data.frame(ks, FN=NA, FP=NA, mal_clas=NA)
+
+j <- 0
+for (i in ks){
+  j <- j +1
+  amino_test_pred <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=i)
+  conf.mat <- CrossTable(x = test_label_coil, y = amino_test_pred, prop.chisq=FALSE)
+  
+  resum[j,2:4] <- c(conf.mat$t[2,1], conf.mat$t[1,2], ((conf.mat$t[1,2]+conf.mat$t[2,1])/sum(conf.mat$t))*100)
+}
+
+```
+
+```{r, echo=FALSE}
+kable(resum, col.names=c("k value", "# false negatives", 
+      "# false positives", "% classified Incorrectly"),
+      align= c("l","c","c","c"))
 ```
 
 
