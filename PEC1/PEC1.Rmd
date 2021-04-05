@@ -25,10 +25,6 @@ require(data.table)
 require(ROCR)
 ```
 
-```{r}
-install.packages("ROCR")
-```
-
 
 # The kNN Algorithm
 
@@ -96,20 +92,22 @@ aminonum <-
 
 We are going to divide our data into two portions: a training dataset that will be used to build the KNN model and a test dataset that will be used to estimate the predictive accuracy of the model. 
 ```{r}
+
+data <- cbind(amino_one_hot, amino[,ncol(amino)])
+colnames(data)[ncol(data)] <- 'V341'
+
 set.seed(123)
 
-train_indx <- sample(x= 1:nrow(amino_one_hot),
-                     size= 0.67*nrow(amino_one_hot),
+train_indx <- sample(x= 1:nrow(data),
+                     size= 0.67*nrow(data),
                      replace=FALSE)
-train_data <- amino_one_hot[train_indx,]
-test_data <- amino_one_hot[-train_indx,]
 
-label_train_idx <- sample(x=1:nrow(amino),
-                          size=0.67*nrow(amino),
-                          replace= FALSE)
-train_label <- amino$V18[label_train_idx]
-test_label <- amino$V18[-label_train_idx]
+train_data <- data[train_indx,-ncol(data)]
+test_data <- data[-train_indx,-ncol(data)]
 
+
+train_label <- data[train_indx, ncol(data)]
+test_label <- data[-train_indx, ncol(data)]
 
 ```
 
@@ -176,19 +174,20 @@ The 11NN aproach was able yo avoid a lot of false positives at the expense of ad
 
 We know the alpha-helix and beta-sheet are both non-coil structures. We are going to performe the same algorithm for these labels.
 
+
 ```{r}
-# copy amino dataframe 
-aminocoil <- copy(amino)
+data_coil <- cbind(amino_one_hot, amino[,ncol(amino)])
+colnames(data_coil)[ncol(data_coil)] <- 'V341'
 
-#re-label and check the porcentages
-
-aminocoil$V18 <- factor(amino$V18, levels = c("coil", "beta-sheet", "alpha-sheet"),
-              labels=c("coil","no-coil","no-coil"))
-
-round(prop.table(table(aminocoil$V18)) * 100, digits = 1)
-
+data_coil$V341 <- factor(data_coil$V341, levels = c( "beta-sheet", "alpha-sheet", "coil"),
+              labels=c("no-coil","no-coil","coil"))
 
 ```
+
+```{r}
+table(data_coil$V341)
+```
+
 
 ## Creating training and test datasets
 
@@ -196,53 +195,41 @@ We are going to divide our data into two portions: a training dataset that will 
 
 
 ```{r}
-set.seed(123)
-
-train_indx_coil <- sample(x= 1:nrow(amino_one_hot),
-                     size= 0.67*nrow(amino_one_hot),
+train_indx_coil <- sample(x= 1:nrow(data_coil),
+                     size= 0.67*nrow(data_coil),
                      replace=FALSE)
-train_data_coil <- amino_one_hot[train_indx,]
-test_data_coil <- amino_one_hot[-train_indx,]
 
-label_train_idx_coil <- sample(x=1:nrow(aminocoil),
-                          size=0.67*nrow(aminocoil),
-                          replace= FALSE)
-train_label_coil <- aminocoil$V18[label_train_idx_coil]
-test_label_coil <- aminocoil$V18[-label_train_idx_coil]
-```
+train_data_coil <- data_coil[train_indx_coil,-ncol(data_coil)]
+test_data_coil <- data_coil[-train_indx_coil,-ncol(data_coil)]
 
-```{r, include=FALSE}
 
-ks2 <- c(1, 3, 5, 7, 11)
-resum2 <- data.frame(ks2, FN=NA, FP=NA, mal_clas=NA)
+train_label_coil <- data_coil[train_indx_coil, ncol(data_coil)]
+test_label_coil <- data_coil[-train_indx_coil, ncol(data_coil)]
 
-j <- 0
-for (i in ks2){
-  j <- j +1
-  aminocoil_test_pred <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=i)
-  conf.mat2 <- CrossTable(x = test_label_coil, y = aminocoil_test_pred, prop.chisq=FALSE)
-  
-  resum2[j,2:4] <- c(conf.mat2$t[2,1], conf.mat2$t[1,2], ((conf.mat2$t[1,2]+conf.mat2$t[2,1])/sum(conf.mat2$t))*100)
-}
 
 ```
 
-```{r, echo=FALSE}
-kable(resum2, col.names=c("k value", "# false negatives", 
-      "# false positives", "% classified Incorrectly"),
-      align= c("l","c","c","c"))
 
-```
-The Receiver Operating Characteristic curve is ussed to examine the trade-off between the detection of true positives, whiile avoiding the false positives. we are goint to calculate de AUC from all the k
+The Receiver Operating Characteristic curve is used to examine the trade-off between the detection of true positives, whiile avoiding the false positives. we are goint to calculate de AUC from all the k-s
 
 ```{r}
-knn_isolet <- class::knn(train_data_coil, test_data_coil, train_label_coil, k=1, prob=TRUE)
-prob <- attr(knn_isolet, "prob")
-prob <- 2*ifelse(knn_isolet == "-1", 1-prob, prob) - 1
 
-pred_knn <- prediction(prob, train_label_coil)
-pred_knn <- performance(pred_knn, "tpr", "fpr")
-plot(pred_knn, avg= "threshold", colorize=T, lwd=3, main="Voilà, a ROC curve!")
+aminocoil_test_pred1 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=1,prob = TRUE)
+prob1 <- attr(aminocoil_test_pred1, "prob")
+prob1 <- ifelse(aminocoil_test_pred1 == "coil", 1-prob1, prob1) 
+
+
+pred_knn <- prediction(prob1, test_label_coil)
+performance_knn <- performance(pred_knn, "tpr", "fpr")
+
+auc_knn <- performance(pred_knn, "auc")
+auc_knn
+
+plot(performance_knn, col=2, lwd=2, main="ROC")
+
+```
+```{r}
+CrossTable(x=test_label_coil, y=aminocoil_test_pred1, prop.chisq=FALSE)
 ```
 
 
@@ -252,10 +239,11 @@ plot(pred_knn, avg= "threshold", colorize=T, lwd=3, main="Voilà, a ROC curve!")
 
 
 ```{r}
+
 # ROC and AUC for k=1
 aminocoil_test_pred1 <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=1,prob = TRUE)
 prob1 <- attr(aminocoil_test_pred1, "prob")
-prob1 <- 2*ifelse(aminocoil_test_pred1 == "-1", 1-prob1, prob1) - 1
+prob1 <- ifelse(aminocoil_test_pred1 == "coil", 1-prob1, prob1) - 1
 
 
 labels1 <- factor(test_label_coil, labels = c(0,1))
