@@ -54,12 +54,6 @@ The strengths and weaknesses of this algorithm are as follows:
 
 We will utilize the "Protein Secondary Structure" from the Brookhaven National Laboratory (USA).This data includes the protein secondary structures from 101 representative proteins.
 
-```{r, echo=FALSE}
-# import the CSV file
-amino <- read.csv(myfile, head=TRUE, sep= ";")
-```
-
-
 ```{r data, include=FALSE}
 amino <- read.csv("data4.csv", head=TRUE, sep= ";")
 amino_one_hot <- read.csv("oh_enc.csv", stringsAsFactors = FALSE)
@@ -83,11 +77,11 @@ amino$V18 <- factor(amino$V18, levels = c("_", "e", "h"),
               labels=c("coil","beta-sheet","alpha-sheet"))
 round(prop.table(table(amino$V18)) * 100, digits = 1)
 ```
-## Data preparation 
 
-### Creating training and test datasets
+## Creating training and test datasets
 
-We are going to divide our data into two portions: a training dataset that will be used to build the KNN model and a test dataset that will be used to estimate the predictive accuracy of the model. 
+We are going to divide our data into two portions: a training dataset that will be used to build the KNN model and a test dataset that will be used to estimate the predictive accuracy of the model. We will use 67% of the data for training and 33% for testing. The `sample ()` function select aleatory 67% of the rows (`r nrow(amino_one_hot)`).
+
 ```{r}
 
 data <- cbind(amino_one_hot, amino[,ncol(amino)])
@@ -129,10 +123,17 @@ To these purpose, we can use the `CrossTable()` function. We will create a cross
 ```{r}
 CrossTable(x=test_label, y=amino_test_pred, prop.chisq=FALSE)
 ```
-The cell percentage in the table indicate the portion of values that fall into four categories. In the top-left, these  of , cell we have the number of values the KNN algorithm correctly identified as coil. In the diagonal we have the true posiive values, for example, these   of  , shows values the KNN correctly identified as alpha-sheet.
-In the case of  examples are false negatives, the predicted value were coil but the structure were beta-sheet. The same happens with  of  the predicted values were coil but the structure were alpha-sheet. 
 
-On the other side, a total of  out of ` were incorrectly classified by the KNN algorithm like alpha-sheet.
+```{r}
+table_knn <- table(amino_test_pred, test_label)
+table_knn
+
+```
+
+The cell percentage in the table indicate the portion of values that fall into four categories. In the top-left, these `r table_knn[1,1]` are the number of values that KNN algorithm correctly identified as coil. In the diagonal we have the true positive values, for example, `r table_knn[3,3]` shows the values KNN correctly identified as alpha-sheet. In despite of these, `r table_knn[2,1]` are false negatives, the predicted values werebeta-sheet but the structure was coil. 
+
+On the other side, a total of `r table_knn[3,1]` were incorrectly classified by the KNN algorithm like alpha-sheet.
+
 
 
 # Step 5 - Improving the model performance
@@ -160,11 +161,10 @@ kable(resum, col.names=c("k value", "# false negatives",
       "# false positives", "% classified Incorrectly"),
       align= c("l","c","c","c"))
 ```
+
 The 11NN aproach was able yo avoid a lot of false positives at the expense of adding false negatives. In these cases, the 1NN aproach has the higher porcentage os classified incorrectly.
 
 Let's see some other values
-
-
 
 ```{r}
 confusionMatrix(amino_test_pred, test_label, positive = "coil" )
@@ -297,25 +297,44 @@ The perfect classifier has a curve that passes through the point at a 100 percen
 
 ```{r, include=FALSE}
 
-ks <- c(1, 3, 5, 7, 11)
-resum <- data.frame(ks, FN=NA, FP=NA, mal_clas=NA)
+ks2 <- c(1, 3, 5, 7, 11)
+resum2 <- data.frame(ks, FN=NA, FP=NA, mal_clas=NA)
 
 j <- 0
-for (i in ks){
+for (i in ks2){
   j <- j +1
   amino_test_pred <- knn(train = train_data_coil, test = test_data_coil, cl = train_label_coil, k=i)
   conf.mat <- CrossTable(x = test_label_coil, y = amino_test_pred, prop.chisq=FALSE)
   
-  resum[j,2:4] <- c(conf.mat$t[2,1], conf.mat$t[1,2], ((conf.mat$t[1,2]+conf.mat$t[2,1])/sum(conf.mat$t))*100)
+  resum2[j,2:4] <- c(conf.mat$t[2,1], conf.mat$t[1,2], ((conf.mat$t[1,2]+conf.mat$t[2,1])/sum(conf.mat$t))*100)
 }
 
 ```
 
+
 ```{r, echo=FALSE}
-kable(resum, col.names=c("k value", "# false negatives", 
+kable(resum2, col.names=c("k value", "# false negatives", 
       "# false positives", "% classified Incorrectly"),
       align= c("l","c","c","c"))
+
 ```
+The best classifier is 1NN , these it is reflected with the AUC value before. 
+
+# Conclusion
+
+We observe that in both cases the 1NN has been the one with the best predictions, we see that as we increase the closest neighbors, the false positives and negatives as expected. The ROC curve and the AUC value serve to reaffirm the results obtained by the performance evaluation
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
