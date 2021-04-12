@@ -1,6 +1,6 @@
 ---
-title: 'Unidad 4: Classificaci?n usando Naive Bayes'
-author: Escribir vuestro nombre y apellidos
+title: 'Classification using Naive Bayes'
+author: Laura Sudupe Medinilla
 subtitle: '`r params$subtitulo`'
 date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
 # date: \today  (solo para pdf)
@@ -22,7 +22,7 @@ params:
   file2: flowering_time.csv
   folder.data: ./floweringTime
   p.train: 0.6666667
-  subtitulo: Predecir el tipo floraci?n (r?pida o lenta) en funci?n del genotipo de la planta
+  subtitulo: Predict flowering type depending plant genotype
   valor.seed: 1234
 bibliography: pec1.bib
 ---
@@ -49,20 +49,19 @@ library("caret")
 
 \pagebreak
 
-# Algoritmo Naive Bayes 
+# Naive Bayes Algorithm 
 
-El algoritmo Naive Bayes describe un m?todo simple para aplicar el teorema de Bayes a los problemas de clasificaci?n. Aunque no es el ?nico m?todo de aprendizaje autom?tico que utiliza m?todos bayesianos, es el m?s com?n. Esto es particularmente cierto para la clasificaci?n de texto, donde se ha convertido en el est?ndar de facto.
+The *Naive Byes* algorithm describes a simple method to aplly Bayes theorem to classification problems. Althopugh it is not the only machine learning method that utilizes Bayesian methods, it is the most common one. This is particularly true for text classification, where it has become the de facto standard. The strengths and weaknesses of this algorithm are as follows:
 
-Las fortalezas y debilidades de este algoritmo son:
 
-| **Fortalezas**    | **Debilidades**  | 
+| **Strenghts**    | **Weaknesses**  | 
 | ----------------------------- |:------------------------------------------- |
-| * Simple, r?pido y muy efectivo | * Se basa en una asunci?n que no es siempre cierta: todas las caracter?sticas son igualmente importantes e independientes|
-| * Funciona bien con ruido de fondo y *missing data*  |  * No es ideal para *datasets* con un gran con muchas variables num?ricas |
-| * Requiere de relativamente pocas muestras para el *training*, pero tambi?n funciona bien cuando hay un gran n?mero de muestras  | * Las probabilidades estimadas son menos fiables que las clases predecidas |
-| * Es facil de obtener la estimaci?n de probabilidad para una predicci?n. |  | 
+| * Simple, fast, and very effective | * SRelies on an often-faulty assumption of equally important and independent features|
+| * Does well with noisy and missing data  |  * Not ideal for datasets with many numeric features |
+| * Requires relatively few examples for training, but also works well with very large numbers of examples  | * Estimated probabilities are less reliable than the predicted classes |
+| * Easy to obtain the estimated probability for a prediction |  | 
 
-# Paso 1 - Recolecci?n de los datos
+# Step 1 - Collecting the data
 
 ```{r, echo=FALSE}
 file1 <- "genotype.csv"
@@ -76,14 +75,12 @@ flowering_time <- read.csv(file2,header= FALSE, col.names= "Flow_time",
 
 ```
 
-El objetivo de este algoritmo es **predecir** el **tipo floraci?n** (r?pida o lenta) en funci?n del **genotipo** de la planta.
+This algorithm objetive is to predict the flowering type (fast or slow) in function of the flower genotype.
 
-Se conoce el genotipo de `r nrow(flowering_time)` plantas y su momento de floraci?n en d?as. Se tiene `r ncol(genotype)` genotipos como variables predictoras. Los estados del genotipo posibles son 0, 1 y 2 que corresponden a Homozigoto dominante, Heterozigoto y Homozigoto recesivo, respectivamente. 
-
-El fichero con la informaci?n genotipica es *`r params$file1`* y el fichero con la informaci?n del tiempo transcurrido hasta la floraci?n para cada planta es *`r params$file2`*.
+We know the genotype of `r nrow(flowering_time)` flowers and the flowering day. We have `r ncol(genotype)` genotypes as predictor features. The genotype states are 0, 1 or 2, which belong to dominant homozygote, heterozygote and recessive homozigote.
 
 
-# Paso 2 - Exploraci?n y preparaci?n de los datos
+# Step 2 - Exploring and preparing the data
 
 Observar que al estar identificado los tipos de genotipo con valores num?ricos, el objeto R que los contiene supone que las variables son num?ricas. Ver la estructura del objeto:
 
