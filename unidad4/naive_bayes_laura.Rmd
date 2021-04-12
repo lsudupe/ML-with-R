@@ -21,9 +21,9 @@ params:
   file1: genotype.csv
   file2: flowering_time.csv
   folder.data: ./floweringTime
-  p.train: 0.6666667
+  p.train: 0.66667
   subtitulo: Predict flowering type depending plant genotype
-  valor.seed: 1234
+  valor.seed: 12345
 bibliography: pec1.bib
 ---
 
@@ -117,72 +117,65 @@ Take a look to the plants type numbers
 table(flowering_factor)
 ```
 
-# Step 3 - Entrenamiento de un modelo con los datos
+## - Creating training and test datasets
+
+We now need to split the data into training and test datasets. 
 
 A continuaci?n, preparamos nuestro *training dada set* que corresponde a `r round((p <- params$p.train),2)` del total y nuestro *test data set* que es el resto:   
 
 ```{r}
 set.seed(params$valor.seed)
-train <- sample(nrow(genotype_f),floor(nrow(genotype_f)*p))
+train <- sample(nrow(genotype_f),floor(nrow(genotype_f)*params$p))
 length(train)
 
-mydata_training<-genotype_f[train,]
-mydata_test<-genotype_f[-train,]
-class_training<-flowering_time_binary[train]
-class_test<-flowering_time_binary[-train]
+train_data <- genotype_f[train,]
+test_data <- genotype_f[-train,]
+
+class_train <- flowering_factor[train]
+class_test <- flowering_factor[-train]
 ```
 
-Observar que se inicializa la semilla para poder repetir la misma serie cada vez.
+# Step 3 - Training a model on the data
 
-Una vez hecha la partici?n se puede entrenar el algoritmo.
+The Naive Bayes implementation we will employ in the e1071 package. Build the classifier
+
 
 ```{r}
-#library(e1071)
-mydata_clsf <- naiveBayes(mydata_training, class_training, laplace=0)
+library(e1071)
+m <- naiveBayes(train_data, class_train, laplace=0)
 ```
 
-El contenido del objecto R resultado del entrenamiento contiene las probabilidades condicionadas de cada categoria seg?n el tipo de floraci?n.
+The function will return a naive Bayes model object that can be used to make predictions
 
+
+# Step 4 - Evaluaci?n del comportamiento del modelo 
+
+To evaluate the flowering classifier, we need to test its predictions on unseen test data. The `predict()` function is used to make the predictions
+
+The function will return a vector of predicted class values 
+ç
 ```{r}
-mydata_clsf$tables[1:4]
+test_pred <- predict(m, test_data)
 ```
 
-
-# Paso 4 - Evaluaci?n del comportamiento del modelo 
-
-Aplicamos la funci?n `predict` del algoritmo con los datos de test para hacer su predicci?n:
-
+To compare the predictions to the true values, we´ll use the `CrossTable()` function 
 ```{r}
-test_pred <- predict(mydata_clsf, mydata_test)
-```
-
-Ahora miramos los resultados en una *Cross Table* usando la funci?n `CrossTable` del package `gmodels`:
-
-```{r}
-#library(gmodels)
+library(gmodels)
 CrossTable(x =test_pred , y = class_test , prop.chisq=FALSE)
 ```
 
-o con la funci?n `confusionMatrix` del package `caret`.
-
-```{r}
-#require(caret,quietly = TRUE)
-confusionMatrix(test_pred,class_test,positive='1')
-```
-
-
-# Paso 5 - Mejora del comportamiento del modelo
+# Step 5 - Improving model performance
 
 Ahora se prueba a entrenar el modelo aplicando la opci?n `laplace = 1`:
 
 ```{r}
-mydata_clsf2 <- naiveBayes(mydata_training, class_training, laplace=1)
+m2 <- naiveBayes(train_data, class_train, laplace=1)
 ```
 
 y se hace la predicci?n:
 
 ```{r}
-test_pred2 <- predict(mydata_clsf2, mydata_test)
+test_pred2 <- predict(m2, test_data)
 ```
 
 
@@ -191,13 +184,6 @@ Ahora se evalua el modelo con la funci?n `CrossTable` del package `gmodels`:
 ```{r}
 #library(gmodels)
 CrossTable(x =test_pred2 , y = class_test , prop.chisq=FALSE)
-```
-
-o con la funci?n `confusionMatrix` del package `caret`.
-
-```{r}
-#require(caret,quietly = TRUE)
-confusionMatrix(test_pred2,class_test,positive='1')
 ```
 
 Se observa que el resultado es un poco peor que con la condici?n ``laplace = 0`. Por tanto, no tiene sentido aplicar `laplace = 1` para mejorar el modelo.
@@ -211,26 +197,26 @@ Se presenta las curvas ROC para el modelo de Naive Bayes con `laplace=0` y `lapl
 El primer paso es obtener las probabilidades de tipo de floraci?n (lenta/r?pida) para cada planta de los datos test.
 
 ```{r}
-test_pred <- predict(mydata_clsf, mydata_test, type="raw")
+test_pred_roc <- predict(m, test_data, type="raw")
 
-tail(test_pred)
+tail(test_pred_roc)
 ```
 
 Con la informaci?n de las probabilidades de la clase positiva (1) se construye la curva ROC.
 
 ```{r, include=FALSE}
-#require(ROCR,quietly=TRUE)
+require(ROCR,quietly=TRUE)
 ```
 
 ```{r}
-pred <- prediction(predictions= test_pred[,2], labels=class_test)
-perf <- performance(pred, measure="tpr", x.measure="fpr")
-#unlist(perf@alpha.values)
+pred_roc <- prediction(predictions= test_pred_roc[,2], labels=class_test)
+perf_roc <- performance(pred_roc, measure="tpr", x.measure="fpr")
+unlist(perf_roc@alpha.values)
 
 
-plot(perf, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
+plot(perf_roc, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
 abline(a=0, b= 1, lwd= 2, lty = 2)
-perf.auc <- performance(pred, measure ="auc")
+perf.auc <- performance(pred_roc, measure ="auc")
 # see http://rocr.bioinf.mpi-sb.mpg.de/
 
 #str(perf)
@@ -243,7 +229,7 @@ El area bajo la curva es **`r unlist(perf.auc@y.values)`**.
 El primer paso es obtener las probabilidades de tipo de floraci?n (lenta/r?pida) para cada planta de los datos test.
 
 ```{r}
-test_pred2 <- predict(mydata_clsf2, mydata_test, type="raw")
+test_pred2 <- predict(m2, test_data, type="raw")
 
 tail(test_pred2)
 ```
