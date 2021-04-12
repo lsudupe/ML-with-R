@@ -1,0 +1,288 @@
+---
+title: 'Unidad 4: Classificaci?n usando Naive Bayes'
+author: Escribir vuestro nombre y apellidos
+subtitle: '`r params$subtitulo`'
+date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
+# date: \today  (solo para pdf)
+output:
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: true
+    theme: united
+    higlight: tango
+  pdf_document:
+    keep_tex: yes
+    toc: yes
+nocite: |
+  @lantz2015machine
+header-includes: \usepackage[spanish]{babel}
+params:
+  file1: genotype.csv
+  file2: flowering_time.csv
+  folder.data: ./floweringTime
+  p.train: 0.6666667
+  subtitulo: Predecir el tipo floraci?n (r?pida o lenta) en funci?n del genotipo de la planta
+  valor.seed: 1234
+bibliography: pec1.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL)
+options(width=90)
+```
+
+
+```{r packages, message=FALSE, echo=FALSE, warning=FALSE}
+libraries <- c("e1071", "gmodels",  "ROCR", "caret")
+check.libraries <- is.element(libraries, installed.packages()[, 1])==FALSE
+libraries.to.install <- libraries[check.libraries]
+if (length(libraries.to.install!=0)) {
+  install.packages(libraries.to.install)
+}
+library("e1071")
+library("gmodels")
+library("ROCR")
+library("caret")
+```
+
+
+\pagebreak
+
+# Algoritmo Naive Bayes 
+
+El algoritmo Naive Bayes describe un m?todo simple para aplicar el teorema de Bayes a los problemas de clasificaci?n. Aunque no es el ?nico m?todo de aprendizaje autom?tico que utiliza m?todos bayesianos, es el m?s com?n. Esto es particularmente cierto para la clasificaci?n de texto, donde se ha convertido en el est?ndar de facto.
+
+Las fortalezas y debilidades de este algoritmo son:
+
+| **Fortalezas**    | **Debilidades**  | 
+| ----------------------------- |:------------------------------------------- |
+| * Simple, r?pido y muy efectivo | * Se basa en una asunci?n que no es siempre cierta: todas las caracter?sticas son igualmente importantes e independientes|
+| * Funciona bien con ruido de fondo y *missing data*  |  * No es ideal para *datasets* con un gran con muchas variables num?ricas |
+| * Requiere de relativamente pocas muestras para el *training*, pero tambi?n funciona bien cuando hay un gran n?mero de muestras  | * Las probabilidades estimadas son menos fiables que las clases predecidas |
+| * Es facil de obtener la estimaci?n de probabilidad para una predicci?n. |  | 
+
+# Paso 1 - Recolecci?n de los datos
+
+```{r, echo=FALSE}
+file1 <- "genotype.csv"
+file2 <- "flowering_time.csv"
+
+genotype <- read.csv(file1, header=FALSE)
+names(genotype) <- paste("gtype",1:ncol(genotype),sep=".")
+
+flowering_time <- read.csv(file2,header= FALSE, col.names= "Flow_time", 
+                           stringsAsFactors=TRUE)
+
+```
+
+El objetivo de este algoritmo es **predecir** el **tipo floraci?n** (r?pida o lenta) en funci?n del **genotipo** de la planta.
+
+Se conoce el genotipo de `r nrow(flowering_time)` plantas y su momento de floraci?n en d?as. Se tiene `r ncol(genotype)` genotipos como variables predictoras. Los estados del genotipo posibles son 0, 1 y 2 que corresponden a Homozigoto dominante, Heterozigoto y Homozigoto recesivo, respectivamente. 
+
+El fichero con la informaci?n genotipica es *`r params$file1`* y el fichero con la informaci?n del tiempo transcurrido hasta la floraci?n para cada planta es *`r params$file2`*.
+
+
+# Paso 2 - Exploraci?n y preparaci?n de los datos
+
+Observar que al estar identificado los tipos de genotipo con valores num?ricos, el objeto R que los contiene supone que las variables son num?ricas. Ver la estructura del objeto:
+
+```{r, echo=FALSE}
+# examine the structure of R objecte
+str(genotype, list.len=10)
+```
+Por tanto, una primera transformaci?n que se debe hacer es cambiar estas variables a tipo `factor`.
+
+```{r, echo=FALSE}
+# 
+genotype_f <-data.frame(lapply(genotype,as.factor))
+```
+
+Ahora la estructura del objeto R es:
+```{r, echo=FALSE}
+# 
+str(genotype_f, list.len=8)
+```
+
+Un sumario de las `r (a <- 10)` primeros genotipos son:
+
+```{r, echo=FALSE}
+summary(genotype_f[1:a])
+```
+
+Observar que ahora el sumario de las variables se basa en la frecuencia de cada tipo de genotipo. 
+
+Se resume el tiempo transcurrido hasta la floraci?n mediante un boxplot: 
+
+```{r, echo=FALSE, fig.height=4, fig.width=5, fig.align='center',   fig.cap="Boxplot del tiempo transcurrido hasta la floraci?n", fig.pos='!h'}
+boxplot(flowering_time, main="Boxplot", ylab="dias", xlab="Tiempo")
+```
+
+El ultimo paso es crear la variable *tipo de floraci?n*. Floraci?n **r?pida**  es cuando el n?mero de d?as trascurrido hasta la floraci?n es menor o igual a `r (b<- 40)` d?as, en caso contrario es floraci?n **lenta**. Se codifica la floraci?n r?pida como 0 y la floraci?n lenta como 1.
+
+
+```{r, echo=FALSE}
+# Debe ser factor en el NaiveBayes
+flowering_time_binary <- as.factor(ifelse(flowering_time>b,1,0))
+#flowering_time_binary <-factor(flowering_time_binary ,labels = c("rapida", "lenta"))
+
+```
+
+El n?mero de plantas para cada tipo de floracion es:
+
+```{r, echo=FALSE}
+# Debe ser factor en el NaiveBayes
+table(flowering_time_binary)
+```
+
+# Paso 3 - Entrenamiento de un modelo con los datos
+
+A continuaci?n, preparamos nuestro *training dada set* que corresponde a `r round((p <- params$p.train),2)` del total y nuestro *test data set* que es el resto:   
+
+```{r}
+set.seed(params$valor.seed)
+train <- sample(nrow(genotype_f),floor(nrow(genotype_f)*p))
+length(train)
+
+mydata_training<-genotype_f[train,]
+mydata_test<-genotype_f[-train,]
+class_training<-flowering_time_binary[train]
+class_test<-flowering_time_binary[-train]
+```
+
+Observar que se inicializa la semilla para poder repetir la misma serie cada vez.
+
+Una vez hecha la partici?n se puede entrenar el algoritmo.
+
+```{r}
+#library(e1071)
+mydata_clsf <- naiveBayes(mydata_training, class_training, laplace=0)
+```
+
+El contenido del objecto R resultado del entrenamiento contiene las probabilidades condicionadas de cada categoria seg?n el tipo de floraci?n.
+
+```{r}
+mydata_clsf$tables[1:4]
+```
+
+
+# Paso 4 - Evaluaci?n del comportamiento del modelo 
+
+Aplicamos la funci?n `predict` del algoritmo con los datos de test para hacer su predicci?n:
+
+```{r}
+test_pred <- predict(mydata_clsf, mydata_test)
+```
+
+Ahora miramos los resultados en una *Cross Table* usando la funci?n `CrossTable` del package `gmodels`:
+
+```{r}
+#library(gmodels)
+CrossTable(x =test_pred , y = class_test , prop.chisq=FALSE)
+```
+
+o con la funci?n `confusionMatrix` del package `caret`.
+
+```{r}
+#require(caret,quietly = TRUE)
+confusionMatrix(test_pred,class_test,positive='1')
+```
+
+
+# Paso 5 - Mejora del comportamiento del modelo
+
+Ahora se prueba a entrenar el modelo aplicando la opci?n `laplace = 1`:
+
+```{r}
+mydata_clsf2 <- naiveBayes(mydata_training, class_training, laplace=1)
+```
+
+y se hace la predicci?n:
+
+```{r}
+test_pred2 <- predict(mydata_clsf2, mydata_test)
+```
+
+
+Ahora se evalua el modelo con la funci?n `CrossTable` del package `gmodels`:
+
+```{r}
+#library(gmodels)
+CrossTable(x =test_pred2 , y = class_test , prop.chisq=FALSE)
+```
+
+o con la funci?n `confusionMatrix` del package `caret`.
+
+```{r}
+#require(caret,quietly = TRUE)
+confusionMatrix(test_pred2,class_test,positive='1')
+```
+
+Se observa que el resultado es un poco peor que con la condici?n ``laplace = 0`. Por tanto, no tiene sentido aplicar `laplace = 1` para mejorar el modelo.
+
+# Curvas ROC
+
+Se presenta las curvas ROC para el modelo de Naive Bayes con `laplace=0` y `laplace= 1`.
+
+## Caso `laplace=0`
+
+El primer paso es obtener las probabilidades de tipo de floraci?n (lenta/r?pida) para cada planta de los datos test.
+
+```{r}
+test_pred <- predict(mydata_clsf, mydata_test, type="raw")
+
+tail(test_pred)
+```
+
+Con la informaci?n de las probabilidades de la clase positiva (1) se construye la curva ROC.
+
+```{r, include=FALSE}
+#require(ROCR,quietly=TRUE)
+```
+
+```{r}
+pred <- prediction(predictions= test_pred[,2], labels=class_test)
+perf <- performance(pred, measure="tpr", x.measure="fpr")
+#unlist(perf@alpha.values)
+
+
+plot(perf, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
+abline(a=0, b= 1, lwd= 2, lty = 2)
+perf.auc <- performance(pred, measure ="auc")
+# see http://rocr.bioinf.mpi-sb.mpg.de/
+
+#str(perf)
+```
+
+El area bajo la curva es **`r unlist(perf.auc@y.values)`**.
+
+## Caso `laplace=1`
+
+El primer paso es obtener las probabilidades de tipo de floraci?n (lenta/r?pida) para cada planta de los datos test.
+
+```{r}
+test_pred2 <- predict(mydata_clsf2, mydata_test, type="raw")
+
+tail(test_pred2)
+```
+
+Con la informaci?n de las probabilidades de la clase positiva (1) se construye la curva ROC.
+
+
+```{r}
+pred2 <- prediction(predictions= test_pred2[,2], labels=class_test)
+perf2 <- performance(pred2, measure="tpr", x.measure="fpr")
+#unlist(perf@alpha.values)
+
+
+plot(perf2, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
+abline(a=0, b= 1, lwd= 2, lty = 2)
+perf2.auc <- performance(pred2, measure ="auc")
+
+
+#str(perf)
+```
+
+El area bajo la curva es **`r unlist(perf2.auc@y.values)`**.
+
+#Referencias
