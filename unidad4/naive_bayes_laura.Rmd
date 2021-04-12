@@ -82,57 +82,42 @@ We know the genotype of `r nrow(flowering_time)` flowers and the flowering day. 
 
 # Step 2 - Exploring and preparing the data
 
-Observar que al estar identificado los tipos de genotipo con valores num?ricos, el objeto R que los contiene supone que las variables son num?ricas. Ver la estructura del objeto:
+The first step towards constructing our classifier involves processing the raw data for analysis.
+
+Using the `str()` function, we see our data structure
 
 ```{r, echo=FALSE}
 # examine the structure of R objecte
-str(genotype, list.len=10)
+str(genotype, list.len=5)
 ```
-Por tanto, una primera transformaci?n que se debe hacer es cambiar estas variables a tipo `factor`.
+The element are numeric, it would be better to convert it into a factor
 
 ```{r, echo=FALSE}
-# 
+
 genotype_f <-data.frame(lapply(genotype,as.factor))
 ```
 
-Ahora la estructura del objeto R es:
+Check again the structure
 ```{r, echo=FALSE}
 # 
-str(genotype_f, list.len=8)
+str(genotype_f, list.len=5)
 ```
-
-Un sumario de las `r (a <- 10)` primeros genotipos son:
+We need to create a new feature, *fast* or *slow* flowering. If the number of days is higher or same to `r (b)` days, we codifice like 1, else, 0.
 
 ```{r, echo=FALSE}
-summary(genotype_f[1:a])
+b <- 40
+flowering_factor <- as.factor(ifelse(flowering_time>b,1,0))
+flowering_factor <- factor(flowering_factor, labels = c("fast", "slow"))
+
 ```
 
-Observar que ahora el sumario de las variables se basa en la frecuencia de cada tipo de genotipo. 
-
-Se resume el tiempo transcurrido hasta la floraci?n mediante un boxplot: 
-
-```{r, echo=FALSE, fig.height=4, fig.width=5, fig.align='center',   fig.cap="Boxplot del tiempo transcurrido hasta la floraci?n", fig.pos='!h'}
-boxplot(flowering_time, main="Boxplot", ylab="dias", xlab="Tiempo")
-```
-
-El ultimo paso es crear la variable *tipo de floraci?n*. Floraci?n **r?pida**  es cuando el n?mero de d?as trascurrido hasta la floraci?n es menor o igual a `r (b<- 40)` d?as, en caso contrario es floraci?n **lenta**. Se codifica la floraci?n r?pida como 0 y la floraci?n lenta como 1.
-
+Take a look to the plants type numbers
 
 ```{r, echo=FALSE}
-# Debe ser factor en el NaiveBayes
-flowering_time_binary <- as.factor(ifelse(flowering_time>b,1,0))
-#flowering_time_binary <-factor(flowering_time_binary ,labels = c("rapida", "lenta"))
-
+table(flowering_factor)
 ```
 
-El n?mero de plantas para cada tipo de floracion es:
-
-```{r, echo=FALSE}
-# Debe ser factor en el NaiveBayes
-table(flowering_time_binary)
-```
-
-# Paso 3 - Entrenamiento de un modelo con los datos
+# Step 3 - Entrenamiento de un modelo con los datos
 
 A continuaci?n, preparamos nuestro *training dada set* que corresponde a `r round((p <- params$p.train),2)` del total y nuestro *test data set* que es el resto:   
 
