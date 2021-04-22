@@ -18,9 +18,8 @@ header-includes: \usepackage[spanish]{babel}
 params:
   file1: BreastCancer2.csv
   folder.data: ./floweringTime
-  b: 40
   p.train: 0.66667
-  subtitulo: Predict flowering type depending plant genotype
+  subtitulo: Predict breast cancer type depending of its biological variables
   valor.seed: 12345
 ---
 
@@ -41,6 +40,7 @@ library("e1071")
 library("gmodels")
 library("ROCR")
 library("caret")
+library("dplyr")
 ```
 
 
@@ -57,6 +57,7 @@ The *Artificial Neural Network (ANN)* models the relationship between a set of i
 | * Capable of modeling more complex patterns than nearly any algorithm  |  *Very prone to overfitting training data |
 | * Makes few assumptions about the data's underlying relationships  | * Results in a complex black box model that is difficult, if not impossible, to interpret |  | 
 
+
 # Step 1 - Collecting the data
 
 ```{r, echo=FALSE}
@@ -67,7 +68,7 @@ breast <- read.csv(file1, header=TRUE)
 
 ```
 
-This algorithm objetive is to predict the flowering type (fast or slow) in function of the flower genotype.
+This algorithm objetive is to predict the breast cancer type in function of the biological variables of the cancer.
 
 We know the genotype of `r nrow(flowering_time)` flowers and the flowering day. We have `r ncol(genotype)` genotypes as predictor features. The genotype states are 0, 1 or 2, which belong to dominant homozygote, heterozygote and recessive homozigote.
 
@@ -80,33 +81,37 @@ Using the `str()` function, we see our data structure
 
 ```{r, echo=FALSE}
 # examine the structure of R objecte
-str(genotype, list.len=5)
+str(breast)
 ```
 The element are numeric, it would be better to convert it into a factor
 
-```{r, echo=FALSE}
-
-genotype_f <-data.frame(lapply(genotype,as.factor))
-```
-
-Check again the structure
-```{r, echo=FALSE}
-
-str(genotype_f, list.len=5)
-```
-We need to create a new feature, *fast* or *slow* flowering. If the number of days is higher or same to `r (b <- 40)` days, we codifice like 1, else, 0.
 
 ```{r, echo=FALSE}
-flowering_factor <- as.factor(ifelse(flowering_time>b,1,0))
-flowering_factor <- factor(flowering_factor, labels = c("fast", "slow"))
+
+breast$Class <- factor(breast$Class, levels= c("benign","malignant"), labels = c(1 ,0))
+
+class(breast$Class)
+
+breast_factor <- breast[, ncol(breast)
 
 ```
 
-Take a look to the plants type numbers
+Neural networks work best when the input data are scaled to a narrow range around zero. The solution is to rescale the data with a normalizing or standardization function
 
 ```{r, echo=FALSE}
-table(flowering_factor)
+
+normalize <- function(x){ 
+  return((x - min(x)) / (max(x) - min(x)))
+} 
+
+breast <- as.data.frame(lapply(breast[, -ncol(breast)], normalize))
+
+breast %>% mutate_at(1:9, funs((.-min(.))/max(.-min(.))))
+
+]
+summary(breast)
 ```
+
 
 ## - Creating training and test datasets
 
@@ -114,11 +119,11 @@ We now need to split the data into training and test datasets.
 
 ```{r}
 set.seed(params$valor.seed)
-train <- sample(nrow(genotype_f),floor(nrow(genotype_f)*params$p))
+train <- sample(nrow(breast),floor(nrow(breast)*params$p.train))
 length(train)
 
-train_data <- genotype_f[train,]
-test_data <- genotype_f[-train,]
+train_data <- breast[train,]
+test_data <- breast[-train,]
 
 class_train <- flowering_factor[train]
 class_test <- flowering_factor[-train]
