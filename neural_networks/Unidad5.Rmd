@@ -16,8 +16,7 @@ output:
     higlight: tango
 header-includes: \usepackage[spanish]{babel}
 params:
-  file1: genotype.csv
-  file2: flowering_time.csv
+  file1: BreastCancer2.csv
   folder.data: ./floweringTime
   b: 40
   p.train: 0.66667
@@ -49,27 +48,22 @@ library("caret")
 
 # Naive Bayes Algorithm 
 
-The *Naive Byes* algorithm describes a simple method to aplly Bayes theorem to classification problems. Althopugh it is not the only machine learning method that utilizes Bayesian methods, it is the most common one. This is particularly true for text classification, where it has become the de facto standard. The strengths and weaknesses of this algorithm are as follows:
+The *Artificial Neural Network (ANN)* models the relationship between a set of input signals and an output signal using a model derived from our understanding of how a biological brain responds to stimuli from sensory inputs. Just as a brain uses a network of interconnected cells called neurons to create a massive parallel processor, ANN uses a network of artificial neurons or nodes to solve learning problems. 
 
 
 | **Strenghts**    | **Weaknesses**  | 
 | ----------------------------- |:------------------------------------------- |
-| * Simple, fast, and very effective | * SRelies on an often-faulty assumption of equally important and independent features|
-| * Does well with noisy and missing data  |  * Not ideal for datasets with many numeric features |
-| * Requires relatively few examples for training, but also works well with very large numbers of examples  | * Estimated probabilities are less reliable than the predicted classes |
-| * Easy to obtain the estimated probability for a prediction |  | 
+| * Can be adapted to classification or numeric prediction problems | * Extremely computationally intensive and slow to train, particularly if the network topology is complex|
+| * Capable of modeling more complex patterns than nearly any algorithm  |  *Very prone to overfitting training data |
+| * Makes few assumptions about the data's underlying relationships  | * Results in a complex black box model that is difficult, if not impossible, to interpret |  | 
 
 # Step 1 - Collecting the data
 
 ```{r, echo=FALSE}
-file1 <- "genotype.csv"
-file2 <- "flowering_time.csv"
+file1 <- "BreastCancer2.csv"
 
-genotype <- read.csv(file1, header=FALSE)
-names(genotype) <- paste("gtype",1:ncol(genotype),sep=".")
 
-flowering_time <- read.csv(file2,header= FALSE, col.names= "Flow_time", 
-                           stringsAsFactors=TRUE)
+breast <- read.csv(file1, header=TRUE)
 
 ```
 
