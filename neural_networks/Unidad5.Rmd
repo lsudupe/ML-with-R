@@ -1,0 +1,245 @@
+---
+title: 'Neural Networks'
+author: Laura Sudupe Medinilla
+subtitle: '`r params$subtitulo`'
+date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
+# date: \today  (solo para pdf)
+output:
+  pdf_document:
+    keep_tex: yes
+    toc: yes
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: true
+    theme: united
+    higlight: tango
+header-includes: \usepackage[spanish]{babel}
+params:
+  file1: genotype.csv
+  file2: flowering_time.csv
+  folder.data: ./floweringTime
+  b: 40
+  p.train: 0.66667
+  subtitulo: Predict flowering type depending plant genotype
+  valor.seed: 12345
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL)
+options(width=90)
+```
+
+
+```{r packages, message=FALSE, echo=FALSE, warning=FALSE}
+libraries <- c("e1071", "gmodels",  "ROCR", "caret")
+check.libraries <- is.element(libraries, installed.packages()[, 1])==FALSE
+libraries.to.install <- libraries[check.libraries]
+if (length(libraries.to.install!=0)) {
+  install.packages(libraries.to.install)
+}
+library("e1071")
+library("gmodels")
+library("ROCR")
+library("caret")
+```
+
+
+\pagebreak
+
+# Naive Bayes Algorithm 
+
+The *Naive Byes* algorithm describes a simple method to aplly Bayes theorem to classification problems. Althopugh it is not the only machine learning method that utilizes Bayesian methods, it is the most common one. This is particularly true for text classification, where it has become the de facto standard. The strengths and weaknesses of this algorithm are as follows:
+
+
+| **Strenghts**    | **Weaknesses**  | 
+| ----------------------------- |:------------------------------------------- |
+| * Simple, fast, and very effective | * SRelies on an often-faulty assumption of equally important and independent features|
+| * Does well with noisy and missing data  |  * Not ideal for datasets with many numeric features |
+| * Requires relatively few examples for training, but also works well with very large numbers of examples  | * Estimated probabilities are less reliable than the predicted classes |
+| * Easy to obtain the estimated probability for a prediction |  | 
+
+# Step 1 - Collecting the data
+
+```{r, echo=FALSE}
+file1 <- "genotype.csv"
+file2 <- "flowering_time.csv"
+
+genotype <- read.csv(file1, header=FALSE)
+names(genotype) <- paste("gtype",1:ncol(genotype),sep=".")
+
+flowering_time <- read.csv(file2,header= FALSE, col.names= "Flow_time", 
+                           stringsAsFactors=TRUE)
+
+```
+
+This algorithm objetive is to predict the flowering type (fast or slow) in function of the flower genotype.
+
+We know the genotype of `r nrow(flowering_time)` flowers and the flowering day. We have `r ncol(genotype)` genotypes as predictor features. The genotype states are 0, 1 or 2, which belong to dominant homozygote, heterozygote and recessive homozigote.
+
+
+# Step 2 - Exploring and preparing the data
+
+The first step towards constructing our classifier involves processing the raw data for analysis.
+
+Using the `str()` function, we see our data structure
+
+```{r, echo=FALSE}
+# examine the structure of R objecte
+str(genotype, list.len=5)
+```
+The element are numeric, it would be better to convert it into a factor
+
+```{r, echo=FALSE}
+
+genotype_f <-data.frame(lapply(genotype,as.factor))
+```
+
+Check again the structure
+```{r, echo=FALSE}
+
+str(genotype_f, list.len=5)
+```
+We need to create a new feature, *fast* or *slow* flowering. If the number of days is higher or same to `r (b <- 40)` days, we codifice like 1, else, 0.
+
+```{r, echo=FALSE}
+flowering_factor <- as.factor(ifelse(flowering_time>b,1,0))
+flowering_factor <- factor(flowering_factor, labels = c("fast", "slow"))
+
+```
+
+Take a look to the plants type numbers
+
+```{r, echo=FALSE}
+table(flowering_factor)
+```
+
+## - Creating training and test datasets
+
+We now need to split the data into training and test datasets. 
+
+```{r}
+set.seed(params$valor.seed)
+train <- sample(nrow(genotype_f),floor(nrow(genotype_f)*params$p))
+length(train)
+
+train_data <- genotype_f[train,]
+test_data <- genotype_f[-train,]
+
+class_train <- flowering_factor[train]
+class_test <- flowering_factor[-train]
+```
+
+# Step 3 - Training a model on the data
+
+The Naive Bayes implementation we will employ in the e1071 package. Build the classifier
+
+
+```{r}
+library(e1071)
+m <- naiveBayes(train_data, class_train, laplace=0)
+```
+
+The function will return a naive Bayes model object that can be used to make predictions
+
+
+# Step 4 - Evaluatin model performance 
+
+To evaluate the flowering classifier, we need to test its predictions on unseen test data. The `predict()` function is used to make the predictions
+
+The function will return a vector of predicted class values 
+ç
+```{r}
+test_pred <- predict(m, test_data)
+```
+
+To compare the predictions to the true values, we´ll use the `CrossTable()` function 
+```{r}
+library(gmodels)
+CrossTable(x =test_pred , y = class_test , prop.chisq=FALSE)
+```
+
+# Step 5 - Improving model performance
+
+We are going to do the same but we will set a value for the Laplace estimator
+
+```{r}
+m2 <- naiveBayes(train_data, class_train, laplace=1)
+```
+
+Do the prediction
+
+```{r}
+test_pred2 <- predict(m2, test_data)
+```
+
+
+Evaluate the model
+
+```{r}
+#library(gmodels)
+CrossTable(x =test_pred2 , y = class_test , prop.chisq=FALSE)
+```
+The results are very similar between them
+
+#  ROC curve
+
+We will performe the ROC value for each case `laplace=0` y `laplace= 1`.
+
+## Case `laplace=0`
+
+First of all we will obtain the flowering probabilities for each plant in the test data
+
+```{r}
+test_pred_roc <- predict(m, test_data, type="raw")
+
+```
+With the positive class probabilities, we performe the ROC curve
+
+```{r, include=FALSE}
+require(ROCR,quietly=TRUE)
+```
+
+```{r}
+
+pred_roc <- prediction(predictions= test_pred_roc[,2], labels=class_test)
+perf_roc <- performance(pred_roc, measure="tpr", x.measure="fpr")
+#unlist(perf_roc@alpha.values)
+
+
+plot(perf_roc, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
+abline(a=0, b= 1, lwd= 2, lty = 2)
+perf.auc <- performance(pred_roc, measure ="auc")
+
+```
+
+AUC value is **`r unlist(perf.auc@y.values)`**.
+
+## Case `laplace=1`
+
+First of all we will obtain the flowering probabilities for each plant in the test data
+
+```{r}
+test_pred2 <- predict(m2, test_data, type="raw")
+
+```
+
+With the positive class probabilities, we performe the ROC curve
+
+```{r}
+pred2 <- prediction(predictions= test_pred2[,2], labels=class_test)
+perf2 <- performance(pred2, measure="tpr", x.measure="fpr")
+#unlist(perf@alpha.values)
+
+
+plot(perf2, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
+abline(a=0, b= 1, lwd= 2, lty = 2)
+perf2.auc <- performance(pred2, measure ="auc")
+
+
+#str(perf)
+```
+
+AUC value is **`r unlist(perf2.auc@y.values)`**.
+
+
