@@ -133,11 +133,26 @@ Mitoses, data = breast, hidden=1)
 
 The function will return a neural network object that can be used to make predictions
 
-
+We can visualize the network topology using `plot()` function on the resulting model object
 ```{r}
 plot(model_1)
 ```
+In this model, there is one input node for each of the eight features, followed by a single hidden node and a double output nodes that predicts the concrete type of the breast tumor. 
 
+The weights for each of the connections are also depicted, as are the **bias terms**. The bias terms are numeric constants that allow the value at the indicated nodes to be shifted upward or downward, much like the intercept in a linear equation.
+
+A neural network with a single hidden node can be thought of as a distant cousin of the linear regression models. The weight betwee each input node and the hidden node is similar to the regression coefficients, and the weight for the bias term is similar to the intercept. 
+
+Also, we are going to evaluate the model with 3 hidden nodes
+
+```{r}
+
+model_3 <- neuralnet(Class ~ Cl.thickness + Cell.size + Cell.shape + Marg.adhesion + Epith.c.size + Bare.nuclei + Bl.cromatin + Normal.nucleoli +
+Mitoses, data = breast, hidden=3)
+
+plot(model_3)
+
+```
 
 
 # Step 4 - Evaluatin model performance 
