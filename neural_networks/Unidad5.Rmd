@@ -42,6 +42,7 @@ library("ROCR")
 library("caret")
 library("dplyr")
 library("neuralnet")
+
 ```
 
 
@@ -107,11 +108,9 @@ set.seed(params$valor.seed)
 train <- sample(nrow(breast),floor(nrow(breast)*params$p.train))
 length(train)
 
-train_data <- breast[train,]
-test_data <- breast[-train,]
+train_data <- breast[train, ]
+test_data <- breast[-train, ]
 
-#class_train <- flowering_factor[train]
-#class_test <- flowering_factor[-train]
 ```
 
 # Step 3 - Training a model on the data
@@ -127,7 +126,7 @@ colnames(breast)
 ```{r}
 
 model_1 <- neuralnet(Class ~ Cl.thickness + Cell.size + Cell.shape + Marg.adhesion + Epith.c.size + Bare.nuclei + Bl.cromatin + Normal.nucleoli +
-Mitoses, data = breast, hidden=1)
+Mitoses, data = train_data, hidden=1)
 
 ```
 
@@ -147,8 +146,10 @@ Also, we are going to evaluate the model with 3 hidden nodes
 
 ```{r}
 
+
+
 model_3 <- neuralnet(Class ~ Cl.thickness + Cell.size + Cell.shape + Marg.adhesion + Epith.c.size + Bare.nuclei + Bl.cromatin + Normal.nucleoli +
-Mitoses, data = breast, hidden=3)
+Mitoses, data = train_data, hidden=3)
 
 plot(model_3)
 
@@ -157,101 +158,35 @@ plot(model_3)
 
 # Step 4 - Evaluatin model performance 
 
-To evaluate the flowering classifier, we need to test its predictions on unseen test data. The `predict()` function is used to make the predictions
+The network topology diagram gives us a peek into the black box of the ANN, but it doesn't provide much information about how well the mdel fits future data. To generate predictions on the dataset, we can use the `compute()` function.
 
-The function will return a vector of predicted class values 
-ç
+
 ```{r}
-test_pred <- predict(m, test_data)
+model_1_results <- compute(model_1, test_data[1:9])
+model_3_results <- compute(model_3, test_data[1:9])
 ```
+
+This function will return a list with two components, `neurons`, which stores the neurons for each layer in the network, and `net.result` which stores the model's predicted values.
+
+```{r}
+predicted1_breast <- model_1_results$net.result
+predicted3_breast <- model_3_results$net.result
+
+```
+
+```{r}
+length(predicted1_breast)
+length(test_data$Class)
+
+```
+
+
+
 
 To compare the predictions to the true values, we´ll use the `CrossTable()` function 
 ```{r}
-library(gmodels)
-CrossTable(x =test_pred , y = class_test , prop.chisq=FALSE)
+
+CrossTable(x =predicted1_breast , y = test_data$Class , prop.chisq=FALSE)
 ```
-
-# Step 5 - Improving model performance
-
-We are going to do the same but we will set a value for the Laplace estimator
-
-```{r}
-m2 <- naiveBayes(train_data, class_train, laplace=1)
-```
-
-Do the prediction
-
-```{r}
-test_pred2 <- predict(m2, test_data)
-```
-
-
-Evaluate the model
-
-```{r}
-#library(gmodels)
-CrossTable(x =test_pred2 , y = class_test , prop.chisq=FALSE)
-```
-The results are very similar between them
-
-#  ROC curve
-
-We will performe the ROC value for each case `laplace=0` y `laplace= 1`.
-
-## Case `laplace=0`
-
-First of all we will obtain the flowering probabilities for each plant in the test data
-
-```{r}
-test_pred_roc <- predict(m, test_data, type="raw")
-
-```
-With the positive class probabilities, we performe the ROC curve
-
-```{r, include=FALSE}
-require(ROCR,quietly=TRUE)
-```
-
-```{r}
-
-pred_roc <- prediction(predictions= test_pred_roc[,2], labels=class_test)
-perf_roc <- performance(pred_roc, measure="tpr", x.measure="fpr")
-#unlist(perf_roc@alpha.values)
-
-
-plot(perf_roc, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
-abline(a=0, b= 1, lwd= 2, lty = 2)
-perf.auc <- performance(pred_roc, measure ="auc")
-
-```
-
-AUC value is **`r unlist(perf.auc@y.values)`**.
-
-## Case `laplace=1`
-
-First of all we will obtain the flowering probabilities for each plant in the test data
-
-```{r}
-test_pred2 <- predict(m2, test_data, type="raw")
-
-```
-
-With the positive class probabilities, we performe the ROC curve
-
-```{r}
-pred2 <- prediction(predictions= test_pred2[,2], labels=class_test)
-perf2 <- performance(pred2, measure="tpr", x.measure="fpr")
-#unlist(perf@alpha.values)
-
-
-plot(perf2, main= "ROC curve", col= "blue", lwd=3, colorize=TRUE)
-abline(a=0, b= 1, lwd= 2, lty = 2)
-perf2.auc <- performance(pred2, measure ="auc")
-
-
-#str(perf)
-```
-
-AUC value is **`r unlist(perf2.auc@y.values)`**.
 
 
