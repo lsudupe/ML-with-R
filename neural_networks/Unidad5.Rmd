@@ -41,6 +41,7 @@ library("gmodels")
 library("ROCR")
 library("caret")
 library("dplyr")
+library("neuralnet")
 ```
 
 
@@ -90,27 +91,10 @@ The element are numeric, it would be better to convert it into a factor
 
 breast$Class <- factor(breast$Class, levels= c("benign","malignant"), labels = c(1 ,0))
 
-class(breast$Class)
-
-breast_factor <- breast[, ncol(breast)
 
 ```
 
-Neural networks work best when the input data are scaled to a narrow range around zero. The solution is to rescale the data with a normalizing or standardization function
-
-```{r, echo=FALSE}
-
-normalize <- function(x){ 
-  return((x - min(x)) / (max(x) - min(x)))
-} 
-
-breast <- as.data.frame(lapply(breast[, -ncol(breast)], normalize))
-
-breast %>% mutate_at(1:9, funs((.-min(.))/max(.-min(.))))
-
-]
-summary(breast)
-```
+Neural networks work best when the input data are scaled to a narrow range around zero. The solution is to rescale the data with a normalizing or standardization function, in this case, there is normalized to 10
 
 
 ## - Creating training and test datasets
@@ -118,6 +102,7 @@ summary(breast)
 We now need to split the data into training and test datasets. 
 
 ```{r}
+
 set.seed(params$valor.seed)
 train <- sample(nrow(breast),floor(nrow(breast)*params$p.train))
 length(train)
@@ -125,21 +110,34 @@ length(train)
 train_data <- breast[train,]
 test_data <- breast[-train,]
 
-class_train <- flowering_factor[train]
-class_test <- flowering_factor[-train]
+#class_train <- flowering_factor[train]
+#class_test <- flowering_factor[-train]
 ```
 
 # Step 3 - Training a model on the data
 
-The Naive Bayes implementation we will employ in the e1071 package. Build the classifier
+To model the relationship between the biological variables and the cancer type we will use a multilayer feedfoorward neural network. The `neuralnet` package provides a standard and easy-to-use implementation of such networks
 
 
 ```{r}
-library(e1071)
-m <- naiveBayes(train_data, class_train, laplace=0)
+colnames(breast)
 ```
 
-The function will return a naive Bayes model object that can be used to make predictions
+
+```{r}
+
+model_1 <- neuralnet(Class ~ Cl.thickness + Cell.size + Cell.shape + Marg.adhesion + Epith.c.size + Bare.nuclei + Bl.cromatin + Normal.nucleoli +
+Mitoses, data = breast, hidden=1)
+
+```
+
+The function will return a neural network object that can be used to make predictions
+
+
+```{r}
+plot(model_1)
+```
+
 
 
 # Step 4 - Evaluatin model performance 
