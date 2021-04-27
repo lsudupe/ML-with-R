@@ -72,8 +72,6 @@ breast <- read.csv(file1, header=TRUE)
 
 This algorithm objetive is to predict the breast cancer type in function of the biological variables of the cancer.
 
-We know the genotype of `r nrow(flowering_time)` flowers and the flowering day. We have `r ncol(genotype)` genotypes as predictor features. The genotype states are 0, 1 or 2, which belong to dominant homozygote, heterozygote and recessive homozigote.
-
 
 # Step 2 - Exploring and preparing the data
 
@@ -88,14 +86,27 @@ str(breast)
 The element are numeric, it would be better to convert it into a factor
 
 
-```{r, echo=FALSE}
+```{r}
+breast$Class <- factor(breast$Class, levels=c('benign', 'malignant'),
+  labels=c(1,0))
+```
 
-breast$Class <- factor(breast$Class, levels= c("benign","malignant"), labels = c(1 ,0))
 
+Neural networks work best when the input data are scaled to a narrow range around zero. The solution is to rescale the data with a normalizing or standardization function, in this case, there is normalized to 10
+
+```{r}
+
+normalize <- function(x) {
+return((x - min(x)) / (max(x) - min(x)))
+}
+
+# Aplicamos la normalización a cada columna del dataframe con lapply
+breast_norm <- as.data.frame(lapply(breast[-ncol(breast)], normalize))
+breast_norm$Class <- breast[,ncol(breast)]
 
 ```
 
-Neural networks work best when the input data are scaled to a narrow range around zero. The solution is to rescale the data with a normalizing or standardization function, in this case, there is normalized to 10
+
 
 
 ## - Creating training and test datasets
@@ -105,11 +116,11 @@ We now need to split the data into training and test datasets.
 ```{r}
 
 set.seed(params$valor.seed)
-train <- sample(nrow(breast),floor(nrow(breast)*params$p.train))
+train <- sample(nrow(breast_norm),floor(nrow(breast_norm)*params$p.train))
 length(train)
 
-train_data <- breast[train, ]
-test_data <- breast[-train, ]
+train_data <- breast_norm[train, ]
+test_data <- breast_norm[-train, ]
 
 ```
 
@@ -119,7 +130,7 @@ To model the relationship between the biological variables and the cancer type w
 
 
 ```{r}
-colnames(breast)
+colnames(breast_norm)
 ```
 
 
@@ -146,8 +157,6 @@ Also, we are going to evaluate the model with 3 hidden nodes
 
 ```{r}
 
-
-
 model_3 <- neuralnet(Class ~ Cl.thickness + Cell.size + Cell.shape + Marg.adhesion + Epith.c.size + Bare.nuclei + Bl.cromatin + Normal.nucleoli +
 Mitoses, data = train_data, hidden=3)
 
@@ -169,24 +178,20 @@ model_3_results <- compute(model_3, test_data[1:9])
 This function will return a list with two components, `neurons`, which stores the neurons for each layer in the network, and `net.result` which stores the model's predicted values.
 
 ```{r}
-predicted1_breast <- model_1_results$net.result
-predicted3_breast <- model_3_results$net.result
+test1_pred <- ifelse(model_1_results$net.result[,2] >= 0.5, "malignant", "benign")
+
+test3_pred <- ifelse(model_3_results$net.result[,2] >= 0.5, "malignant", "benign")
 
 ```
-
-```{r}
-length(predicted1_breast)
-length(test_data$Class)
-
-```
-
-
 
 
 To compare the predictions to the true values, we´ll use the `CrossTable()` function 
 ```{r}
 
-CrossTable(x =predicted1_breast , y = test_data$Class , prop.chisq=FALSE)
+confusionMatrix(table(test_data$Class, test1_pred), positive = "malignant")
+confusionMatrix(table(test_data$Class, test3_pred), positive = "malignant")
+
+
 ```
 
 
