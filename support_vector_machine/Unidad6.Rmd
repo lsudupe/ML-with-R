@@ -1,0 +1,389 @@
+---
+title: 'Support Vector Machines'
+author: Laura Sudupe Medinilla
+subtitle: '`r params$subtitulo`'
+date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
+# date: \today  (solo para pdf)
+output:
+  html_notebook:
+    df_print: paged
+    toc: yes
+    toc_float: true
+    theme: united
+    highlight: tango
+  pdf_document:
+    keep_tex: yes
+    toc: yes
+    df_print: kable
+    highlight: zenburn
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: true
+    theme: united
+    highlight: tango
+header-includes:
+  - \usepackage[spanish]{babel}
+params:
+  file: colon2.csv
+  p.train: 0.6666667
+  subtitulo: Predict tumor type depending tissues genetic expression
+  seed.train: 12345
+  seed.clsfier: 1234567
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL, cache=TRUE)
+options(width=90)
+```
+
+
+```{r packages, message=FALSE, echo=FALSE, warning=FALSE}
+libraries <- c("neuralnet", "NeuralNetTools", "ggplot2" ,"caret")
+check.libraries <- is.element(libraries, installed.packages()[, 1])==FALSE
+libraries.to.install <- libraries[check.libraries]
+if (length(libraries.to.install!=0)) {
+  install.packages(libraries.to.install)
+}
+
+success <- sapply(libraries,require, quietly = FALSE,  character.only = TRUE)
+if(length(success) != length(libraries)) {stop("A package failed to return a success in require() function.")}
+```
+
+\pagebreak
+
+
+#Algoritmo Red Neuronal Artificial (ANN)
+
+Las redes neuronales artificiales se inspira en las redes neuronales como las que se tiene en el cerebro. Las neuronas se sustituyen por nodos que reciben y envian se?ales (informaci?n).  Se crea una red con diferentes capas interconectadas para procesar la informaci?n. Cada capa esta formada por un grupo de nodos que transmite la informaci?n a los otros nodos de las capas siguientes.
+
+Una red neuronal artificial se caracteriza por:
+
+- La topolog?a: Esto corresponde al n?mero de capas y de nodos. Adem?s de la direcci?n en que se la informaci?n pasa de un nodo al siguiente, dentro de capas o entre capas.
+
+- La funci?n de activaci?n:  Funci?n que recibe un conjunto de entradas e integra la se?ales para transmitir la nformaci?n a otro nodo/capa. 
+
+- El algoritmo de entrenamiento: Establece la importancia de cada conexi?n para transmitir o no la se?al a los nodos correspondientes. El m?s usado es el algoritmo "backpropagation". El nombre indica que para corregir los errores de predicci?n va hacia atras de la red corrigiendo los pesos de los nodos. 
+
+Las fortalezas y debilidades de este algoritmo son:
+
+| **Strengths**    | **Weaknesses**  | 
+| ----------------------------------- |:-----------------------------------|
+|- Can be used for classification or numeric prediction problems |- Finding the best model requires testing of various combinations of kernels and model parameters |
+| - Not overly influenced by noisy data and not very prone to overfitting | - Can be slow to train, particularly if the input dataset has a large number of features or examples |
+| - May be easier to use than neural networks, particularly due to the existence of several well-supported SVM algorithms | - Results in a complex black box model that is difficult, if not impossible, to interpret
+| - Gaining popularity due to its high accuracy and high-profile wins in data mining competitions
+
+
+# Predict tumor type depending tissues genetic expression
+
+## Step 1 - Collecting the data
+
+First, we are going to assign the variables and read the file.
+
+
+```{r asigna, echo=TRUE, eval=FALSE}
+file <- "colon2.csv"
+p.train <- 0.6666667
+subtitulo <- "Predict tumor type depending tissues genetic expression"
+seed.train <- 1234
+
+```
+
+De esta manera separamos el proceso de lectura y, posterior an?lisis de la asignaci?n que puede cambiarse en el futuro.
+
+Ahora ya se importan los datos a formato data.frame
+
+```{r frag1,message=FALSE,warning=FALSE}
+dataset <- read.csv(file) 
+length(complete.cases(dataset))
+```
+
+El fichero *`r params$file1`* est?  formado por `r nrow(dataset)` observaciones y `r ncol(dataset)` variables. Adem?s, se verifica que todos las observaciones est?n completas y no hay que hacer ajustes por datos faltantes.
+
+Las variables son todas de tipo ordinal (num?rico entero), excepto la clase que es categ?rica con dos factores:
+`r names(dataset)`
+
+
+## Step 2 - Exploraci?n y preparaci?n de los datos
+
+
+En primer lugar se presenta los seis primeros registros: 
+
+```{r frag2, echo=FALSE}
+dataset[,ncol(dataset)]
+```
+
+Como son pocas variables, se puede hacer una exploraci?n gr?fica mediante boxplot:
+
+```{r frag3,echo=FALSE,fig.height=4}
+summary(dataset)
+boxplot(dataset[,1:9],main='Datos sin normalizar',col='brown',cex.axis=0.4,subset=dataset$Class)
+abline(h=5,lwd=2)
+```
+
+Se presenta el comportamiento de una variable en funci?n de la categoria de la clase.
+
+```{r frag4,message=FALSE,warning=FALSE,echo=FALSE,fig.width=3,fig.height=3,fig.align='center'}
+#library(ggplot2)
+plot <- ggplot(dataset, aes(x=Class, y=Bare.nuclei))
+plot + geom_violin()
+```
+
+### Transformaci?n de los datos num?ricos.
+
+Hay que normalizar las variables para que tomen valores entre 0 y 1. Se define la funci?n `normalize` para realizar est? operaci?n.
+
+```{r frag5}
+# custom normalization function
+normalize <- function(x) {
+return((x - min(x)) / (max(x) - min(x)))
+}
+
+data_nrm <- as.data.frame(lapply(dataset[,-10],normalize))
+```
+
+Se confirma que el rango de valores esta entre 0 y 1.
+
+```{r frag6}
+summary(data_nrm)
+```
+
+### Creaci?n de variables binarias en lugar de usar la variable factor.
+
+Ahora se crean tantas variables binarias como categorias tiene la variable `Class`. 
+
+```{r frag7}
+# Creaci?n de variables binarias en lugar de usar la variable factor
+data_nrm$M <- dataset$Class=="malignant"
+data_nrm$B <- dataset$Class=="benign"
+```
+
+El boxplot de los datos transformados queda:
+
+```{r frag8, fig.height=3}
+boxplot(data_nrm[,1:9],main='Datos con escala [0,1]',col='brown',cex.axis=0.4)
+abline(h=0.5,lwd=2)
+```
+
+
+### Partici?n de los datos en training/test
+
+
+```{r frag9a}
+#n_train <- 2/3
+n <- nrow(data_nrm)
+```
+Se realiza una extracci?n de los datos *aleatoriamente* de `r round(params$p.train *100,2)`% de todas las observaciones, `r floor(params$p.train*n)`, para entrenar al modelo y del resto `r (n - floor(params$p.train*n))` para evaluarlo (test).
+
+```{r frag9}
+# create training and test data
+set.seed(params$seed.train)
+#n_train <- 2/3
+#n <- nrow(data_nrm)
+train <- sample(n,floor(n*params$p.train))
+data_nrm.train <- data_nrm[train,]
+data_nrm.test  <- data_nrm[-train,]
+```
+
+
+## Step 3 - Entrenamiento del modelo.
+
+Para la construcci?n de la red neuronal artificial se usa la funci?n `neuralnet()` del paquete *neuralnet*:
+
+La f?rmula del modelo tiene `r ncol(data_nrm)` nodos de entrada y `nlevels(dataset$Class)` nodos de salida:
+
+
+```{r frag10, echo=FALSE,warning=FALSE,message=FALSE}
+#require(neuralnet)
+
+## Create a formula for a model with a large number of variables:
+xnam <- names(data_nrm[1:9])
+(fmla <- as.formula(paste("M+B ~ ", paste(xnam, collapse= "+"))))
+```
+
+El modelo aplicado es de un nodo en la capa intermedia, esto se consigue con el argumento `hidden=1`.  
+
+```{r frag11,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
+
+# simple ANN with only a single hidden neuron
+set.seed(params$seed.clsfier) # to guarantee repeatable results
+data_model_1 <- neuralnet(fmla,
+                          data = data_nrm.train,
+                          hidden=1,linear.output=FALSE)
+
+# visualize the network topology
+plot(data_model_1, rep='best')
+
+```
+
+Adem?s, el modelo se construye con el argumento `linear.output=FALSE` ya que se trata de un problema de clasificaci?n.
+
+Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*
+
+```{r frag12,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
+#library(NeuralNetTools)
+
+# visualize the network topology with NeuralNetTools
+plotnet(data_model_1,  prune_col = 'lightblue')
+```
+
+
+## Step 4 - Predicci?n y evaluaci?n del modelo
+
+Una vez obtenido el primer modelo, se evalua su rendimiento con los datos de test. Se debe de clasificar las muestras test con la funci?n `compute`.
+
+```{r frag13,warning=FALSE,message=FALSE,tidy=TRUE}
+model_results_1 <- compute(data_model_1, data_nrm.test[,1:9])$net.result
+
+# Put multiple binary output to categorical output
+maxidx <- function(arr) {
+  return(which(arr == max(arr)))
+}
+
+idx <- apply(model_results_1, 1, maxidx)
+prediction <- c('malignant', 'benign')[idx]
+res <- table(prediction, dataset$Class[-train] )
+
+# Results
+#require(caret)
+(cmatrix1 <- confusionMatrix(res,positive="malignant"))
+```
+
+El modelo de una capa con categoria positiva 'malignant' obtiene una precisi?n de `r round(cmatrix1$overall["Accuracy"], 3)` y una sensitividad y especificidad de `r round(cmatrix1$byClass["Sensitivity"], 3)` y `r round(cmatrix1$byClass["Specificity"], 3)` respectivamente.
+
+
+##Step 5 - Mejora del rendimiento del modelo
+
+El primer modelo fue con *un nodo* en la capa oculta. Ahora se plantea *3 nodos* en la capa oculta para tratar de mejorar el rendimiento.
+
+```{r frag14,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
+
+# simple ANN with only a single hidden neuron
+set.seed(params$seed.clsfier) # to guarantee repeatable results
+data_model_3 <- neuralnet(fmla,
+                          data = data_nrm.train,
+                          hidden=3,linear.output=FALSE)
+
+# visualize the network topology
+plot(data_model_3, rep='best')
+
+```
+
+Tambi?n se puede hacer la representaci?n usando el paquete *NeuralNetTools*
+
+```{r frag15,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
+# visualize the network topology with NeuralNetTools
+plotnet(data_model_3,  prune_col = 'lightblue')
+```
+
+El resultado de la matriz de confusi?n con los datos de test es:
+
+
+```{r frag16,warning=FALSE,message=FALSE,tidy=TRUE}
+model_results_3 <- compute(data_model_3, data_nrm.test[,1:9])$net.result
+
+# Put multiple binary output to categorical output
+maxidx <- function(arr) {
+  return(which(arr == max(arr)))
+}
+
+idx <- apply(model_results_3, 1, maxidx)
+prediction <- c('malignant', 'benign')[idx]
+res <- table(prediction, dataset$Class[-train] )
+
+# Results
+#require(caret)
+(cmatrix3 <- confusionMatrix(res,positive="malignant"))
+```
+
+
+El nuevo modelo con 3 nodos ocultos obtiene una precisi?n de `r round(cmatrix3$overall["Accuracy"], 3)` y una sensitividad y especificidad de `r round(cmatrix3$byClass["Sensitivity"], 3)` y `r round(cmatrix3$byClass["Specificity"], 3)` respectivamente. `r if(cmatrix1$overall["Accuracy"] > cmatrix3$overall["Accuracy"]){"Vemos que el modelo obtenido con un solo nodo tiene una mayor precisi?n"}``r if(cmatrix1$overall["Accuracy"] < cmatrix3$overall["Accuracy"]){"Vemos que el modelo obtenido con tres nodo tiene una mayor precisi?n"}``r if(cmatrix1$overall["Accuracy"] == cmatrix3$overall["Accuracy"]){"Vemos que ambos modelos tienen la misma precisi?n"}`
+
+Al comparar los dos modelos si se ven resultados muy similares, se suele escoger el modelo m?s sencillo.
+
+Hay que equilibrar la complejidad y la precisi?n del modelo, ya que modelos m?s complejos tambi?n son m?s susceptibles de tener overfitting.
+
+## Paquete *caret*: modelo `nnet`
+
+La funci?n `nnet` admite datos de tipo factor, as? que no hay que transformar la variable `Class` en variables binarias. 
+
+Adem?s, se puede usar la funci?n `createDataPartition` para crear la partici?n de los datos en training/test.
+
+```{r frag17,warning=FALSE,message=FALSE}
+#library(nnet)
+
+#Partici?n de datos
+set.seed(params$seed.train)
+# We wish 75% for the trainset 
+inTrain <- createDataPartition(y=dataset$Class, p=0.66666666666666667, list=FALSE)
+#dim(inTrain)
+# Dataset normalizado
+data_nrm <- cbind(data_nrm[,1:9],Class=dataset[,10])
+
+train.set <- data_nrm[inTrain,]
+test.set  <- data_nrm[-inTrain,]
+
+#train.set <- dataset[inTrain,]
+#test.set  <- dataset[-inTrain,]
+nrow(train.set)/nrow(test.set) # should be around 2
+```
+
+**Train de 2/3 y 1/3 test**
+
+```{r frag18,warning=FALSE,message=FALSE}
+# modelo Train/test without repetition 
+model <- train(Class ~ ., train.set, method='nnet', 
+               trControl= trainControl(method='none'), 
+              # preProcess = "range",
+               tuneGrid= NULL, tuneLength=1 ,trace = FALSE) #
+
+plotnet(model)
+summary(model)
+prediction <- predict(model, test.set[-10])                           # predict
+table(prediction, test.set$Class)                                  # compare
+
+# predict can also return the probability for each class:
+prediction <- predict(model, test.set[-10], type="prob")  
+head(prediction)
+```
+
+**5-fold crossvalidation**
+
+```{r frag19,warning=FALSE,message=FALSE,fig.height=4}
+# modelo 5-crossvalidation 
+model <- train(Class ~ ., train.set, method='nnet', 
+               trControl= trainControl(method='cv', number=5), 
+               tuneGrid= NULL, tuneLength=10 ,trace = FALSE)
+
+plotnet(model, alpha=0.6)
+summary(model)
+prediction <- predict(model, test.set[-10])                           # predict
+table(prediction, test.set$Class)                                  # compare
+
+# predict can also return the probability for each class:
+prediction <- predict(model, test.set[-10], type="prob")  
+head(prediction)
+```
+
+
+**Bootstrap**
+
+```{r frag20,warning=FALSE,message=FALSE,fig.height=4}
+# Por defecto es Bootstrap, con 25 repeticiones para 3 posibles decay
+# y 3 posibles sizes
+model <- train(Class ~ ., train.set, method='nnet', trace = FALSE) # train
+# we also add parameter 'preProc = c("center", "scale"))' at train() for centering and scaling the data
+
+plotnet(model)
+summary(model)
+prediction <- predict(model, test.set[-10])                           # predict
+table(prediction, test.set$Class)                                  # compare
+
+# predict can also return the probability for each class:
+prediction <- predict(model, test.set[-10], type="prob")  
+head(prediction)
+```
+
+
+#Referencias
