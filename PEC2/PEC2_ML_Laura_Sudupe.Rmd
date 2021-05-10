@@ -1,0 +1,450 @@
+---
+title: 'PEC2'
+author: Laura Sudupe Medinilla
+subtitle: '`r params$subtitulo`'
+date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
+# date: \today  (solo para pdf)
+output:
+  pdf_document:
+    keep_tex: yes
+    toc: yes
+    df_print: kable
+    highlight: zenburn
+  html_document:
+    df_print: paged
+    toc: yes
+    toc_float: true
+    theme: united
+    highlight: tango
+  html_notebook:
+    df_print: paged
+    toc: yes
+    toc_float: true
+    theme: united
+    highlight: tango
+header-includes:
+  - \usepackage[spanish]{babel}
+params:
+  file: colon2.csv
+  p.train: 0.6666667
+  subtitulo: Predict tumor type depending tissues genetic expression
+  seed.train: 12345
+  seed.clsfier: 1234567
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, comment = NULL, cache=TRUE)
+options(width=90)
+```
+
+
+```{r packages, message=FALSE, echo=FALSE, warning=FALSE}
+libraries <- c("ggplot2" ,"caret", "e1071", "kernlab")
+check.libraries <- is.element(libraries, installed.packages()[, 1])==FALSE
+libraries.to.install <- libraries[check.libraries]
+if (length(libraries.to.install!=0)) {
+  install.packages(libraries.to.install)
+}
+
+success <- sapply(libraries,require, quietly = FALSE,  character.only = TRUE)
+if(length(success) != length(libraries)) {stop("A package failed to return a success in require() function.")}
+```
+
+
+
+```{r setup, include=FALSE}
+#Con esta opcion al ejecutar el informe dinamico crea unas carpetas donde se guardan los resultados de los procesos. Cuando se vuelve a ejecutar de nuevo el informe dinamico solo ejecuta codigo R donde se ha producido cambios, en el resto lee la informacion previamente descargada. Es una opcion muy adecuada cuando la ejecucion es muy costosa computacionalmente
+knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
+```
+
+
+# Prediccion de secuencias promotoras de E.Coli utilizando diferentes algoritmos de clasificacion
+
+Los promotores son secuencias de ADN que afectan la frecuencia y ubicacion del inicio de la transcripcion a traves de la interaccion con la ARN polimerasa.
+
+Este estudio se basa en los ficheros obtenidos de:
+
+@Dua:2019
+
+Para mas informacion, se puede recurrir a la siguiente referencia acerca del estudio de promotores en E. Coli: 
+
+@harley1987analysis
+
+Los atributos del fichero de datos son:
+
+1. Un simbolo de {+/-}, indicando la clase (+ = promotor).
+
+2. El nombre de la secuencia promotora. Las instancias que corresponden a no promotores se denominan por la posicion genomica.
+
+3. Las restantes 57 posiciones corresponden a la secuencia.
+
+La manera elegida para representar los datos es un paso crucial en los algoritmos de clasificacion. En el caso que nos ocupa, analisis basados en secuencias, se usara la transformacion denominada one-hot encoding. El one-hot encoding representa cada nucleotido por un vector de 4 componentes, con 3 de ellas a 0 y una a 1 indicando el nucleotido. Pongamos por ejemplo, el nucleotido T se representa por (1,0,0,0), el nucleotido C por (0,1,0,0), el nucleotido G por (0,0,1,0) y el nucleotido A por (0,0,0,1). Por tanto, para una secuencia de 57 nucleotidos, como en nuestro caso, se obtendra un vector de 4*57=228 componentes, resultado de concatenar los vectores para cada uno de los 57 nucleotidos.
+
+Una vez realizada la transformacion one-hot encoding, el objetivo se trata de implementar distintos algoritmos vistos en el curso para predecir si la secuencia es un promotor o no, y comparar sus rendimientos
+
+# Objetivo
+
+En esta PEC se analizan esto datos mediante la implementacion de los diferentes algoritmos estudiados: `k-Nearest Neighbour`,`Naive Bayes`,`Artificial Neural Network`, `Support Vector Machine`, `Arbol de Decision` y `Random Forest` para predecir si una secuencia de ADN es promotor o no.
+
+# Introduccion
+
+Los pasos 1 (Recoleccion de datos) y 2 (Exploracion y preparacion de los datos) son comunes a todos los algoritmos, por lo que son realizados inicialmente. Posteriormente se realiza una breve explicacion del funcionamiento de cada algoritmo y sus caracterisiticas. Ademas, se presenta una tabla de sus fortaleza y debilidades. Dentro del apartado que hace mencion a cada algoritmo, se realizan los pasos: 3 (Entrenamiento del modelo en los datos), 4 (Evaluacion del rendimiento del modelo) y 5 (Mejora del rendimiento del modelo), que son especificos de cada algoritmo.
+
+En todos los casos se evalua la calidad del algoritmo con la informacion obtenida de la funcion `confusionMatrix()` del paquete **caret**.
+
+Por ultimo, hay un apartado de conclusion y discusion sobre el rendimiento, interpretabilidad, ... de los algoritmos para el problema tratado, proponiendo que modelo o modelos son los mejores.
+
+## Paso 1 - Recoleccion de los datos
+
+Importamos el fichero "promoters.txt" que se nos proporciona y el cual contiene en la primera columna el simbolo indicando la clase (+ = promotor); en la segunda columna el nombre de la secuencia promotora, denominandose las instancias que corresponden a no promotores por la posicion genomica; y en la tercera columna los 57 nucleotidos de cada secuencia.
+Importamos tambien el fichero `promoters_onehot` que ya contiene las secuencias codificadas segun un one-hot, pero tan solo se utilizara como comprobacion de resultados. 
+
+```{r, echo=FALSE}
+# importamos los documentos CSV
+promoters <- read.csv("D:/BIOINFORMATICS MASTER/Machine Learning/PECS/PEC3/promoters.txt", header=FALSE)
+promoters_onehot <- read.csv("D:/BIOINFORMATICS MASTER/Machine Learning/PECS/PEC3/promoters_onehot.txt", sep="")
+```
+
+## Paso 2- Exploracion y transformacion de los datos 
+
+Usando el comando `str()`, observamos que el conjunto de datos promoters contiene `r nrow(promoters)` filas, que corresponden a las secuencias y `r ncol(promoters)` columnas, como mencionabamos previamente.  Las primeras 6 lineas del output son: 
+
+```{r}
+# examinando la estructura del dataset
+str(promoters)
+```
+
+Ya que muchos clasificadores de machine learning necesitan que la caracteristica diana sea codificada como factor, lo primero que tenemos que hacer es comprobar si la variable `V1`, que corresponde a la clase, es un factor. Esta variable corresponde a la primera columna del data frame `promoters` y que como deciamos previamente contiene el simbolo + si es un promotor o el simbolo - si no lo es. No lo es, por lo que lo codificamos:
+
+```{r}
+#llamaremos P a las secuencias promotoras y NP a las no promotoras
+promoters$V1 <- factor(promoters$V1, levels = c("+", "-"),
+                         labels = c("P", "NP"))
+#llamamos clase a la columna V1
+names(promoters)[1] <- "clase"
+```
+
+Comprobamos:
+
+```{r}
+class(promoters$clase)
+```
+Podemos observar cuantas secuencias son promotoras o no promotoras en este data frame:
+
+```{r}
+table(promoters$clase)
+```
+Y las propociones:
+
+```{r}
+round(prop.table(table(promoters$clase)) * 100, digits = 1)
+```
+
+Podemos ver que 49.5% de las secuencias no son promotores, mientras que el 50.5% restante si lo son.
+
+
+### Transformacion - Representacion de las secuencias de nucleotidos utilizando funcion de codificacion one hot
+
+Para implementar una transformacion one-hot encoding de las secuencias del fichero de datos `promoters`, generamos la funcion `hot_enc()` en R:
+
+```{r}
+#dentro de la funcion, generamos el vector "nucleotidos" que contiene los 4 nucleotidos diferentes 
+# tambien generamos un vector "seq" que nos indica las posiciones de inicio de cada vector de 4 bit, que a su vez corresponde a cada nucleotido de una secuencia
+# generamos un vector de 0 que llamaremos "final_vector" y cuyas dimensiones son el numero de filas del data frame sobre el cual ejecutaremos la funcion, mientras que el numero de columnas surge de multiplicar la longitud del vector nucleotidos, es decir, 4, por el numero de nucleotidos que se contienen, en este caso, en cada secuencia (es decir, 57).
+#en el primer loop le decimos que tenga en cuenta, uno a uno, tantos valores del data frame como filas tiene
+#en el segundo loop le indicamos que tenga en cuenta, uno a uno, todos los nucleotidos que se incluyen en cada secuencia, los cuales se encuentran en la tercera columna del data frame. Ademas, le pedimos que nos genere, para cada uno, un vector de 4 bits, en el cual aparezca 1 en la posicion que ocupa el nucleotido seleccionado de acuerdo al orden establecido por el vector "nucleotidos". Una vez haya hecho eso para el primer nucleotido de la secuencia, gracias al primer loop, lo hacemos en cada valor de dicha columna, generando un "final_vector" modificado. 
+promoters$V3 <- as.character(promoters$V3)
+hot_enc <- function(x) {
+nucleotidos <- c("t", "c", "g", "a")
+seq <- c(0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124,128,132,136,140,144,148,152,156,160,164,168,172,176,180,184,188,192,196,200,204,208,212,216,220,224,228)
+final_vector <- matrix(0,nrow(x),(length(nucleotidos)* max(nchar(x$V3))))
+for (i in 1:nrow(x)){
+  for (j in 1:nchar(x$V3[i])){
+    position <- which(regexpr(substr(x$V3[i],j,j),nucleotidos)==1)
+    final_vector[i,position+seq[j]]<-1
+  }
+}
+  return(final_vector)
+}
+
+```
+
+Y ahora utilizamos dicha funcion en el data frame `promoters`, y al vector final le llamaremos `onehot_encoding`
+
+```{r}
+hot_enc(promoters) -> onehot_encoding
+#las dimensiones de este vector deben ser 105 filas (numero de secuencias) y 228 columnas (57 nucleotidos en cada secuencia y cada uno genera un vector de 4 bit)
+#convertimos los valores numericos en valores enteros
+onehot_encoding <- data.frame(onehot_encoding)
+onehot_encoding <- lapply(onehot_encoding, as.integer)
+onehot_encoding <- data.frame(onehot_encoding)
+```
+
+```{r, echo=FALSE}
+write.csv(onehot_encoding, "onehot_encoding.csv", quote = FALSE, row.names = FALSE)
+```
+
+Ahora eliminamos la tercera columna del data frame `promoters` y unimos las 2 columnas restantes con el data frame `onehot_encoding`, generando uno nuevo llamado `promoters_enconding`
+
+```{r}
+promoters_encoding <- cbind(promoters[,1:2], onehot_encoding)
+```
+
+Utilizamos de nuevo el comando `str()` y observamos que ahora el conjunto de datos `promoters_enconding` contiene las mismas filas que antes: `r nrow(promoters_encoding)`, pero `r ncol(promoters_encoding)` columnas.  Las primeras 6 lineas del output son: 
+
+```{r}
+# examinando la estructura de los datasets impensData y schillingData
+str(promoters_encoding, list.len=6)
+```
+
+Comprobamos si el data frame `promoters_enconding` generado gracias a la funcion implementada en `promoters` es igual al data frame que se nos proporcionaba en el enunciado ya con el one-hot encoding realizado (`promoters_onehot`)
+
+```{r}
+str(promoters_onehot, list.len=6)
+```
+
+Observamos que tanto el numero de filas y de columnas, como el tipo de variables (salvo la variable class que no ha sido codificada aun como factor) y los valores son iguales. Por lo tanto, a partir de ahora, podemos utilizar cualquier de los dos data frames. Yo utilizare `promoters_enconding`
+
+El identificador no lo necesitamos para nada, por lo que lo eliminamos:
+
+```{r}
+promoters_encoding <- promoters_encoding[,-2]
+```
+
+### Creacion de variables binarias en lugar de la variable factor
+
+La funcion `neuralnet()` que utilizaremos para el algoritmo de redes neuronales artificiales, no admite variables factor o categoricas. Por tanto, hay que transformar la variable `clase` que indica el tipo de secuencia  (promotora o no promotra) a binaria. Para este cometido, se deben crear dos variables que sustituyen a la variable original. Una sera la variable promotor (P) que tiene valores (TRUE o 1) en los casos P y (FALSE o 0) en los casos NP. De manera semejante, se crea la variable no promotor (NP). 
+
+Ahora se crean tantas variables binarias como categorias tiene la variable `clase`. 
+
+
+```{r}
+# Creacion de variables binarias a partir de la variable factor
+promoters_encoding$P <- promoters_encoding$clase=="P"
+promoters_encoding$NP <- promoters_encoding$clase=="NP"
+```
+
+
+### Creacion de los conjuntos de datos training y testing
+
+Para generar los conjuntos de datos, utilizamos el data frame `promoters_encoding`, en el que cada fila es una secuencia de nucleotidos, y el orden es el mismo que el establecido en el data frame `promoters`
+
+Dividimos en dos partes `promoters_encoding`: un conjunto de datos de training `data_train`, que se utiliza para construir los diferentes modelos; y un conjunto de datos de testing `data_test` que se utiliza para estimar la precision predictiva de los modelos. 
+
+Utilizaremos el 67% de los datos para training y el 33% para testing. La seleccion de cada muestra se realiza de manera aleatoria, utilizando el valor de la semilla = 123, lo que nos permite reproducir mas tarde estos mismos data frames que se van a originar de manera aleatoria. En el data frame `sample_train`, la funcion `sample ()` selecciona, al azar, el 67% del total de filas (`r nrow(onehot_encoding)`)
+
+```{r}
+set.seed(123)
+sample_train <- sample(nrow(promoters_encoding), nrow(promoters_encoding) * 0.67)
+str(sample_train)
+```
+
+Como podemos observar, el objeto `sample_train` es un vector de 70 numeros enteros aleatorios.
+
+Utilizando este vector, seleccionamos las filas de los datos de `promoters_encoding` y los dividimos en los conjuntos de datos `data_train` del 67% y `data_test` del 33%.
+
+```{r}
+data_train <- promoters_encoding[sample_train, ]
+# al utilizar el operador minus previo a sample_train al generar la muestra de testing, le decimos a R que seleccione los registros que no estan en las filas especificadas; es decir, los datos de testing incluyen solo las filas que no estan en la muestra de training.
+data_test <- promoters_encoding[-sample_train, ]
+
+# Creo dos vectores con las clases, es decir, la columna 1 del data frame promoters_encoding en el cual aparece P o NP de acuerdo a si la secuencia de nucleotidos era promotor o no 
+vector <- promoters_encoding[, 1]
+data_train_labels <- vector[sample_train]
+data_test_labels <- vector[-sample_train]
+```
+
+Como podemos observar, el objeto `data_train` es un data frame de `r nrow(data_train)` secuencias aleatorias con codificacion one-hot, mientras que `data_test` contiene las otras `r nrow(data_test)` secuencias.
+
+
+
+# Algoritmo Red Neuronal Artificial (ANN)
+
+# Naive Bayes Algorithm 
+
+The *Artificial Neural Network (ANN)* models the relationship between a set of input signals and an output signal using a model derived from our understanding of how a biological brain responds to stimuli from sensory inputs. Just as a brain uses a network of interconnected cells called neurons to create a massive parallel processor, ANN uses a network of artificial neurons or nodes to solve learning problems. 
+
+
+| **Strenghts**    | **Weaknesses**  | 
+| ----------------------------- |:------------------------------------------- |
+| * Can be adapted to classification or numeric prediction problems | * Extremely computationally intensive and slow to train, particularly if the network topology is complex|
+| * Capable of modeling more complex patterns than nearly any algorithm  |  *Very prone to overfitting training data |
+| * Makes few assumptions about the data's underlying relationships  | * Results in a complex black box model that is difficult, if not impossible, to interpret |  |
+
+
+
+## Paso 3 - Entrenamiento del modelo en los datos
+
+Las redes neuronales funcionan mejor cuando los datos de entrada se escalan a un rango estrecho alrededor de cero. Puesto que en este caso tan solo tenemos valores de 0 o 1, no es necesario normalizar.
+
+Para la construccion de la red neuronal artificial se usa la funcion `neuralnet()` del paquete *neuralnet*. Como mencionabamos previamente, esta funcion no admite variables factor o categoricas, por lo que creamos las dos variables: P, que tiene valores (TRUE o 1) en los casos P y (FALSE o 0) en los casos NP. De manera semejante, se crea la variable NP. Esta funcion admite variables logicas (TRUE/FALSE) y las transforma a binarias internamente. 
+
+Al crear dos variables binarias como variables a predecir la red neuronal tendra 2 nodos de output.
+
+La formula del modelo tiene 228 nodos de entrada (resultado de la codificacion one-hot de cada nucleotido) y 2 nodos de salida:
+
+```{r}
+## creamos una formula para un modelo con un gran numero de variables
+xnam <- names(promoters_encoding[,2:229])
+(fmla <- as.formula(paste("P + NP ~ ", paste(xnam, collapse= "+"))))
+```
+
+Entrenamos una red multicapa con cuatro nodos ocultos, a la que llamaremos `ANN4`, y examinamos su topologia
+
+```{r}
+set.seed(123)
+ANN4  <- neuralnet(fmla,data_train[-1],hidden=4,linear.output=FALSE)
+```
+
+```{r}
+# representamos graficamente el modelo generado
+plot(ANN4,rep="best")  
+```
+
+Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
+
+```{r}
+plotnet(ANN4, alpha = 0.6)
+```
+
+## Paso 4 - Evaluacion del rendimiento del modelo
+
+Una vez obtenido el modelo, se procede a clasificar las muestras test con la funcion `compute`, la cual devuelve una lista con dos componentes: "neurons", que almacena los nodos para cada capa en la red y "net.result", que almacena los valores predichos. Queremos esto ultimo.
+
+Para la red neuronal `ANN4`:
+
+```{r}
+ANN4_results <- neuralnet::compute(ANN4, data_test[,2:229])$net.result
+# Funcion para transformar un output binario multiple en categorico
+maxidx <- function(arr) {
+  return(which(arr == max(arr)))
+}
+
+idx_4 <- apply(ANN4_results, 1, maxidx)
+prediction_4 <- c('P', 'NP')[idx_4]
+res_4 <- table(prediction_4, data_test_labels)
+res_4 <- res_4[c("P","NP"),]
+(matrix <- confusionMatrix(res_4,positive="P"))
+```
+
+Utilizando una red neuronal de cuatro capas ocultas con categoria positiva 'P', de un total de `r sum(matrix$t)`, hay `r matrix$t[1,1]` verdaderos positivos, `r matrix$t[2,2]` verdaderos negativos, `r matrix$t[2,1]` falsos negativos  y `r matrix$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8824 y 1, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos negativos (2) es mayor que el de falsos positivos, puesto que no hay. 
+
+## Paso 5 - Mejora del rendimiento del modelo
+
+Para observar si hay una mejora, probaremos a implementar una red neuronal de cinco capas ocultas.  Llamaremos al clasificador `ANN5`:
+
+```{r}
+set.seed(123)
+ANN5 <- neuralnet(fmla,data_train[-1],hidden=5,linear.output=FALSE)
+plot(ANN5, rep="best")
+```
+
+Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
+
+```{r}
+plotnet(ANN5, alpha = 0.6)
+```
+
+Una vez obtenidos los modelos, se procede a clasificar las muestras test con la funcion `compute`, de la cual queremos los "net.result", que almacenan los valores predichos:
+
+```{r}
+ANN5_results <- neuralnet::compute(ANN5, data_test[,2:229])$net.result
+
+maxidx <- function(arr) {
+  return(which(arr == max(arr)))
+}
+
+idx_5 <- apply(ANN5_results, 1, maxidx)
+prediction_5 <- c('P', 'NP')[idx_5]
+res_5 <- table(prediction_5, data_test_labels)
+res_5 <- res_5[c("P","NP"),]
+(matrix5 <- confusionMatrix(res_5,positive="P"))
+```
+
+Utilizando una red neuronal de cinco capas ocultas con categoria positiva 'P', de un total de `r sum(matrix5$t)`, hay `r matrix5$t[1,1]` verdaderos positivos, `r matrix5$t[2,2]` verdaderos negativos, `r matrix5$t[2,1]` falsos negativos  y `r matrix5$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix5$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix5$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8235 y 0.8889, respectivamente. Este algoritmo clasifica bien 30 de 35 secuencias, mientras que el numero de falsos negativos (3) es mayor que el de falsos positivos (2). En terminos generales, podemos ver que la red neuronal con cinco capas ocultas parece funcionar peor que la de cuatro capas ocultas.
+
+La red neuronal de cuatro capas ocultas es el mejores clasificador de secuencias promotoras hasta ahora.
+
+# Support Vector Machine (SVM)
+
+A **Support Vector Machine (SVM)** can be imagined as a surface that creates a boundary between points of data plotted in multidimensional that represent examples and their feature values. The goal of a SVM is t create a flat boundary called **hyperplane**, which divides the space to create fairly homogeneus partitions on either side. In this way, the SVM learning combines aspects of both the instance-based nearest neighbor learning and the linear regression modeling. The combination is extremly powerful, allowing SVMs to model highly complex relationships.
+
+| **Strengths**    | **Weaknesses**  | 
+| ----------------------------------- |:-----------------------------------|
+|- Can be used for classification or numeric prediction problems |- Finding the best model requires testing of various combinations of kernels and model parameters |
+| - Not overly influenced by noisy data and not very prone to overfitting | - Can be slow to train, particularly if the input dataset has a large number of features or examples |
+| - May be easier to use than neural networks, particularly due to the existence of several well-supported SVM algorithms | - Results in a complex black box model that is difficult, if not impossible, to interpret
+| - Gaining popularity due to its high accuracy and high-profile wins in data mining competitions
+
+## Paso 3 - Entrenamiento del modelo en los datos
+
+Utilizaremos la funcion `ksvm()` del paquete `kernlab` para entrenar al modelo SVM, utilizando el dataset `data_train`
+
+Se construye el modelo mas sencillo: lineal usando como kernel el valor `vanilladot`
+
+```{r}
+# no utilizaremos las dos ultimas columnas ya que tan solo eran necesarias para el entrenamiento de las redes neuronales
+set.seed(123)
+lm <- ksvm(clase ~ ., data = data_train[,1:229],kernel = "vanilladot")
+lm
+```
+
+## Paso 4 - Evaluacion del rendimiento del modelo
+
+La funcion `predict()` nos permite utilizar los modelos de clasificacion previamente generados para hacer predicciones en el dataset de testing `data_test`
+
+```{r}
+#la opcion type especifica si la prediccion es "response" (la clase predicha) o "probabilities" (la probabilidad predicha, una columna por nivel de clase)
+#por defecto, la funcion predict() tiene type="response"
+# no utilizaremos las dos ultimas columnas ya que tan solo eran necesarias para el entrenamiento de las redes neuronales
+pre <- predict(lm, data_test[,1:229])
+pre
+```
+
+
+```{r}
+#la categoria positiva es promotor (P)
+cm <- confusionMatrix(pre, data_test_labels, positive = "P")
+cm
+```
+
+Utilizando un modelo SVM lineal con categoria positiva 'P', de un total de `r sum(cm$t)`, hay `r cm$t[1,1]` verdaderos positivos, `r cm$t[2,2]` verdaderos negativos, `r cm$t[2,1]` falsos negativos  y `r cm$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.8333, respectivamente. Este algoritmo clasifica bien 31 de 35 secuencias, mientras que el numero de falsos positivos (3) es mayor que el de falsos negativos (1). 
+
+
+## Paso 5 - Mejora del rendimiento del modelo
+
+Ahora se plantea SVM con un el kernel Gaussiano, `rbfdot` para tratar de mejorar el rendimiento:
+
+```{r}
+set.seed(123)
+lm_g <- ksvm(clase ~ ., data = data_train[,1:229], kernel='rbfdot')
+lm_g
+```
+
+```{r}
+pre_g <- predict(lm_g, data_test[,1:229])
+pre_g
+```
+
+```{r}
+#la categoria positiva es promotor (P)
+cm_g <- confusionMatrix(pre_g, data_test_labels, positive = "P")
+cm_g
+```
+
+Utilizando un modelo SVM gausiano con categoria positiva 'P', de un total de `r sum(cm_g$t)`, hay `r cm_g$t[1,1]` verdaderos positivos, `r cm_g$t[2,2]` verdaderos negativos, `r cm_g$t[2,1]` falsos negativos  y `r cm_g$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm_g$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm_g$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.9444, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos positivos y falsos negativos es bajo, tan solo 1 por cada uno. En terminos de eficiencia, el modelo ha mejorado con respecto al SVM lineal, puesto que clasifica bien 2 secuencias mas. Tambien aumenta la especificidad utilizando este algoritmo con respecto al lineal.
+
+En terminos generales, ambos modelos son bastantes eficientes, pero parece que el SVM gausiano funciona mejor con estos datos. 
+
+Hasta ahora, podemos ver que tanto el SVM gausiano como la red neuronal de cuatro capas ocultas obtienen las mejores eficiencias al clasificar las secuencias (promotoras o no). La diferencia entre ellos es que el SVM gausiano obtiene 1 falso negativo y 1 falso positivo, mientras que la red neuronal de cuatro capas ocultas obtiene dos falsos negativos y ningun falso positivo.
+
+
+
+
+# Discusion 
+
+De acuerdo a las matrices de confusion, en las que siempre se ha otorgado a la secuencia promotora la categoria positiva, en general parece estar claro que, si nos centramos en la precision, el algoritmo de clasificacion que mejor funciona para el caso de estudio son los arboles de decision con boosting = 1, ya que la precision es maxima, clasificando en la clase "real" cada secuencia (promotora versus no promotora). Los arboles de decision con boosting=10 tambien obtienen una precision de 1, pero tan solo utilizaron una interaccion, por lo que las otras 9 no fueron necesarias. Tras este, obteniendo una precision de 0.9714, el modelo Random Forests con 100 arboles seria el siguiente mejor clasificador de secuencias. Tras estos dos, con una precision de 0.9429 se encuentran los algoritmos Random Forests con 50 arboles, el SVM gausiano y la red neuronal de 4 capas ocultas. Random Forests con 50 arboles y el SVM gausiano comparten que obtienen 1 falso negativo y 1 falso positivo, mientras que la red neuronal de cuatro capas ocultas obtiene dos falsos negativos y ningun falso positivo. A continuacion, con una precision de 0.9143 aparecen los algoritmos Naive Bayes, tanto con lapalce=0 como con laplace=1, ya que ambos clasifican bien 32 de 35 secuencias, mientras que el numero de falsos negativos es de 2 y el de falsos positivos de 1. Al utilizar el algoritmo SVM lineal se obtiene una precision de 0.8857, que si bien es bastante alta, nos demuestra que en este caso, si tuviesemos que escoger entre los dos SVM utilizados, escogeriamos el SVM gausiano. Lo mismo pasa con las redes neuronales, ya que al utilizar cinco capas ocultas obtenemos una precision de 0.8571, que al comparar con el resultado obtenido al utilizar cuatro capas ocultas nos indica que es mas aconsejable utilizar el modelo con menos capas. Por ultimo, aparecen los algoritmos k-NN, siendo el numero de vecinos utilizados mas optimo, el de 3, puesto que obtenemos una precision de 0.8. Utilizando menos vecinos (k=1), la precision baja a 0.7714, lo mismo que ocurre al aumentar los vecinos (con k=5 obtenemos una precision de 0.7429 y con k=7 de 0.7714).
+
+Con estos datos, podemos afirmar que los algoritmo k-NN son los menos optimos para clasificar secuencias promotoras con los datos del estudio, si bien es cierto que la precision no es extremadamente baja. El resto de clasificadores obtienen una precision bastante alta, pero sin duda, parece que el mejor algoritmo de clasificacion es el de arboles de decision, ya que parecen no cometer ningun error en las predicciones.Por supuesto, harian falta mas medidas de rendimiento para confirmar estos resultados, ya que tan solo con la eficiencia (o incluso con sensibilidad y especificidad) podemos estar perdiendonos informacion esecial y sobrevalorar o infravalorar un clasificador.
+
+# Referencias
