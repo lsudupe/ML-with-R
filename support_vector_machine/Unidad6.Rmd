@@ -53,19 +53,9 @@ if(length(success) != length(libraries)) {stop("A package failed to return a suc
 \pagebreak
 
 
-#Algoritmo Red Neuronal Artificial (ANN)
+#Support Vector Machine (SVM)
 
-Las redes neuronales artificiales se inspira en las redes neuronales como las que se tiene en el cerebro. Las neuronas se sustituyen por nodos que reciben y envian se?ales (informaci?n).  Se crea una red con diferentes capas interconectadas para procesar la informaci?n. Cada capa esta formada por un grupo de nodos que transmite la informaci?n a los otros nodos de las capas siguientes.
-
-Una red neuronal artificial se caracteriza por:
-
-- La topolog?a: Esto corresponde al n?mero de capas y de nodos. Adem?s de la direcci?n en que se la informaci?n pasa de un nodo al siguiente, dentro de capas o entre capas.
-
-- La funci?n de activaci?n:  Funci?n que recibe un conjunto de entradas e integra la se?ales para transmitir la nformaci?n a otro nodo/capa. 
-
-- El algoritmo de entrenamiento: Establece la importancia de cada conexi?n para transmitir o no la se?al a los nodos correspondientes. El m?s usado es el algoritmo "backpropagation". El nombre indica que para corregir los errores de predicci?n va hacia atras de la red corrigiendo los pesos de los nodos. 
-
-Las fortalezas y debilidades de este algoritmo son:
+A **Support Vector Machine (SVM)** can be imagined as a surface that creates a boundary between points of data plotted in multidimensional that represent examples and their feature values. The goal of a SVM is t create a flat boundary called **hyperplane**, which divides the space to create fairly homogeneus partitions on either side. In this way, the SVM learning combines aspects of both the instance-based nearest neighbor learning and the linear regression modeling. The combination is extremly powerful, allowing SVMs to model highly complex relationships.
 
 | **Strengths**    | **Weaknesses**  | 
 | ----------------------------------- |:-----------------------------------|
