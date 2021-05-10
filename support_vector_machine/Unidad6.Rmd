@@ -80,45 +80,27 @@ seed.train <- 1234
 
 ```
 
-De esta manera separamos el proceso de lectura y, posterior an?lisis de la asignaci?n que puede cambiarse en el futuro.
-
-Ahora ya se importan los datos a formato data.frame
 
 ```{r frag1,message=FALSE,warning=FALSE}
 dataset <- read.csv(file) 
 length(complete.cases(dataset))
 ```
 
-El fichero *`r params$file1`* est?  formado por `r nrow(dataset)` observaciones y `r ncol(dataset)` variables. Adem?s, se verifica que todos las observaciones est?n completas y no hay que hacer ajustes por datos faltantes.
-
-Las variables son todas de tipo ordinal (num?rico entero), excepto la clase que es categ?rica con dos factores:
-`r names(dataset)`
+The file *`r params$file`* has `r nrow(dataset)` observations and `r ncol(dataset)` variables. The data doesn't need any transformation
 
 
-## Step 2 - Exploraci?n y preparaci?n de los datos
+## Step 2 - Exploring and preparing the data
 
 
-En primer lugar se presenta los seis primeros registros: 
+In the `r ncol(dataset)` we have the type of tumor
 
 ```{r frag2, echo=FALSE}
-dataset[,ncol(dataset)]
+table(dataset[,ncol(dataset)])
 ```
 
-Como son pocas variables, se puede hacer una exploraci?n gr?fica mediante boxplot:
+SVM learners require all features to be numeric, and moreover, that each feature is scaled to a fairly small interval. In this case, every feature is an integer, so we do not need to convert any factors into numbers
 
-```{r frag3,echo=FALSE,fig.height=4}
-summary(dataset)
-boxplot(dataset[,1:9],main='Datos sin normalizar',col='brown',cex.axis=0.4,subset=dataset$Class)
-abline(h=5,lwd=2)
-```
 
-Se presenta el comportamiento de una variable en funci?n de la categoria de la clase.
-
-```{r frag4,message=FALSE,warning=FALSE,echo=FALSE,fig.width=3,fig.height=3,fig.align='center'}
-#library(ggplot2)
-plot <- ggplot(dataset, aes(x=Class, y=Bare.nuclei))
-plot + geom_violin()
-```
 
 ### Transformaci?n de los datos num?ricos.
 
@@ -157,27 +139,24 @@ abline(h=0.5,lwd=2)
 ```
 
 
-### Partici?n de los datos en training/test
+### Split the data in training/test
+
+Let's separe the data in train and test.
 
 
-```{r frag9a}
-#n_train <- 2/3
-n <- nrow(data_nrm)
-```
-Se realiza una extracci?n de los datos *aleatoriamente* de `r round(params$p.train *100,2)`% de todas las observaciones, `r floor(params$p.train*n)`, para entrenar al modelo y del resto `r (n - floor(params$p.train*n))` para evaluarlo (test).
+```{r}
 
-```{r frag9}
-# create training and test data
-set.seed(params$seed.train)
-#n_train <- 2/3
-#n <- nrow(data_nrm)
-train <- sample(n,floor(n*params$p.train))
-data_nrm.train <- data_nrm[train,]
-data_nrm.test  <- data_nrm[-train,]
+set.seed(params$valor.seed)
+train <- sample(nrow(dataset),floor(nrow(dataset)*params$p.train))
+
+train_data <- dataset[train, ]
+test_data <- dataset[-train, ]
 ```
 
 
-## Step 3 - Entrenamiento del modelo.
+## Step 3 - Train the model
+
+
 
 Para la construcci?n de la red neuronal artificial se usa la funci?n `neuralnet()` del paquete *neuralnet*:
 
