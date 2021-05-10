@@ -72,7 +72,7 @@ A **Support Vector Machine (SVM)** can be imagined as a surface that creates a b
 First, we are going to assign the variables and read the file.
 
 
-```{r asigna, echo=TRUE, eval=FALSE}
+```{r}
 file <- "colon2.csv"
 p.train <- 0.6666667
 subtitulo <- "Predict tumor type depending tissues genetic expression"
@@ -81,7 +81,7 @@ seed.train <- 1234
 ```
 
 
-```{r frag1,message=FALSE,warning=FALSE}
+```{r}
 dataset <- read.csv(file) 
 length(complete.cases(dataset))
 ```
@@ -94,7 +94,7 @@ The file *`r params$file`* has `r nrow(dataset)` observations and `r ncol(datase
 
 In the `r ncol(dataset)` we have the type of tumor
 
-```{r frag2, echo=FALSE}
+```{r}
 table(dataset[,ncol(dataset)])
 ```
 
@@ -121,7 +121,7 @@ test_data <- dataset[-train, ]
 
 We are going to use the package *kernlab* and train the linear and gaussian model
 
-```{r , echo=FALSE,warning=FALSE,message=FALSE}
+```{r}
 
 
 #train the linear model
@@ -138,7 +138,7 @@ gs <- ksvm( y ~ ., data = train_data, kernel = 'rbfdot')
 
 The `predict()` function allows us to use the classification model to make predictions on the testing dataset.
 
-```{r ,warning=FALSE,message=FALSE,tidy=TRUE}
+```{r}
 
 lm_pre <- predict(lm, test_data)
 gs_pre <- predict(gs, test_data)
@@ -160,14 +160,18 @@ gs_cm <- confusionMatrix(gs_pre, test_data$y, positive = "t")
 
 ```
 
-El modelo de una capa con categoria positiva 'malignant' obtiene una precisi?n de `r round(cmatrix1$overall["Accuracy"], 3)` y una sensitividad y especificidad de `r round(cmatrix1$byClass["Sensitivity"], 3)` y `r round(cmatrix1$byClass["Specificity"], 3)` respectivamente.
+Let's see the models performance
 
 ```{r}
 lm_cm
 ```
+The linear model with the tumor type like positive class obtain a `r round(lm_cm$overall["Accuracy"], 3)` precision, `r round(lm_cm$byClass["Sensitivity"], 3)` sensibility and a `r round(lm_cm$byClass["Specificity"], 3)` specificity. In the case of gaussian model,
 
 ```{r}
 gs_cm
 ```
 
+we have a `r round(lm_cm$overall["Accuracy"], 3)` precision, `r round(lm_cm$byClass["Sensitivity"], 3)` sensibility and a `r round(lm_cm$byClass["Specificity"], 3)` specificity.
 
+
+So in conclusion, in this case we have a better performance in the case of the lineal SVM model.
