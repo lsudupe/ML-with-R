@@ -39,7 +39,7 @@ options(width=90)
 
 
 ```{r packages, message=FALSE, echo=FALSE, warning=FALSE}
-libraries <- c("neuralnet", "NeuralNetTools", "ggplot2" ,"caret")
+libraries <- c("ggplot2" ,"caret", "e1071")
 check.libraries <- is.element(libraries, installed.packages()[, 1])==FALSE
 libraries.to.install <- libraries[check.libraries]
 if (length(libraries.to.install!=0)) {
@@ -101,44 +101,6 @@ table(dataset[,ncol(dataset)])
 SVM learners require all features to be numeric, and moreover, that each feature is scaled to a fairly small interval. In this case, every feature is an integer, so we do not need to convert any factors into numbers
 
 
-
-### Transformaci?n de los datos num?ricos.
-
-Hay que normalizar las variables para que tomen valores entre 0 y 1. Se define la funci?n `normalize` para realizar est? operaci?n.
-
-```{r frag5}
-# custom normalization function
-normalize <- function(x) {
-return((x - min(x)) / (max(x) - min(x)))
-}
-
-data_nrm <- as.data.frame(lapply(dataset[,-10],normalize))
-```
-
-Se confirma que el rango de valores esta entre 0 y 1.
-
-```{r frag6}
-summary(data_nrm)
-```
-
-### Creaci?n de variables binarias en lugar de usar la variable factor.
-
-Ahora se crean tantas variables binarias como categorias tiene la variable `Class`. 
-
-```{r frag7}
-# Creaci?n de variables binarias en lugar de usar la variable factor
-data_nrm$M <- dataset$Class=="malignant"
-data_nrm$B <- dataset$Class=="benign"
-```
-
-El boxplot de los datos transformados queda:
-
-```{r frag8, fig.height=3}
-boxplot(data_nrm[,1:9],main='Datos con escala [0,1]',col='brown',cex.axis=0.4)
-abline(h=0.5,lwd=2)
-```
-
-
 ### Split the data in training/test
 
 Let's separe the data in train and test.
@@ -147,6 +109,7 @@ Let's separe the data in train and test.
 ```{r}
 
 set.seed(params$valor.seed)
+dataset$y <- as.factor(dataset$y)
 train <- sample(nrow(dataset),floor(nrow(dataset)*params$p.train))
 
 train_data <- dataset[train, ]
@@ -154,48 +117,21 @@ test_data <- dataset[-train, ]
 ```
 
 
-## Step 3 - Train the model
+## Step 3 - Train the models
+
+We are going to use the package *kernlab* and train the linear and gaussian model
+
+```{r , echo=FALSE,warning=FALSE,message=FALSE}
 
 
-
-Para la construcci?n de la red neuronal artificial se usa la funci?n `neuralnet()` del paquete *neuralnet*:
-
-La f?rmula del modelo tiene `r ncol(data_nrm)` nodos de entrada y `nlevels(dataset$Class)` nodos de salida:
+#train the linear model
+lm <- ksvm( y ~ ., data = train_data, kernel = 'vanilladot')
 
 
-```{r frag10, echo=FALSE,warning=FALSE,message=FALSE}
-#require(neuralnet)
-
-## Create a formula for a model with a large number of variables:
-xnam <- names(data_nrm[1:9])
-(fmla <- as.formula(paste("M+B ~ ", paste(xnam, collapse= "+"))))
+#train the gaussian model
+gs <- ksvm( y ~ ., data = train_data, kernel = 'rbfdot')
 ```
 
-El modelo aplicado es de un nodo en la capa intermedia, esto se consigue con el argumento `hidden=1`.  
-
-```{r frag11,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
-
-# simple ANN with only a single hidden neuron
-set.seed(params$seed.clsfier) # to guarantee repeatable results
-data_model_1 <- neuralnet(fmla,
-                          data = data_nrm.train,
-                          hidden=1,linear.output=FALSE)
-
-# visualize the network topology
-plot(data_model_1, rep='best')
-
-```
-
-Adem?s, el modelo se construye con el argumento `linear.output=FALSE` ya que se trata de un problema de clasificaci?n.
-
-Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*
-
-```{r frag12,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
-#library(NeuralNetTools)
-
-# visualize the network topology with NeuralNetTools
-plotnet(data_model_1,  prune_col = 'lightblue')
-```
 
 
 ## Step 4 - Predicci?n y evaluaci?n del modelo
