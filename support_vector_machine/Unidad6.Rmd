@@ -127,168 +127,47 @@ We are going to use the package *kernlab* and train the linear and gaussian mode
 #train the linear model
 lm <- ksvm( y ~ ., data = train_data, kernel = 'vanilladot')
 
-
 #train the gaussian model
 gs <- ksvm( y ~ ., data = train_data, kernel = 'rbfdot')
+
 ```
 
 
 
-## Step 4 - Predicci?n y evaluaci?n del modelo
+## Step 4 - Evaluating model performance
 
-Una vez obtenido el primer modelo, se evalua su rendimiento con los datos de test. Se debe de clasificar las muestras test con la funci?n `compute`.
+The `predict()` function allows us to use the classification model to make predictions on the testing dataset.
 
-```{r frag13,warning=FALSE,message=FALSE,tidy=TRUE}
-model_results_1 <- compute(data_model_1, data_nrm.test[,1:9])$net.result
+```{r ,warning=FALSE,message=FALSE,tidy=TRUE}
 
-# Put multiple binary output to categorical output
-maxidx <- function(arr) {
-  return(which(arr == max(arr)))
-}
+lm_pre <- predict(lm, test_data)
+gs_pre <- predict(gs, test_data)
 
-idx <- apply(model_results_1, 1, maxidx)
-prediction <- c('malignant', 'benign')[idx]
-res <- table(prediction, dataset$Class[-train] )
+```
 
-# Results
-#require(caret)
-(cmatrix1 <- confusionMatrix(res,positive="malignant"))
+
+```{r}
+lm_pre
+```
+
+
+To examine how well our classifier performed, we will use `confusionMatrix()`.
+
+```{r}
+
+lm_cm <- confusionMatrix(lm_pre, test_data$y, positive = "t")
+gs_cm <- confusionMatrix(gs_pre, test_data$y, positive = "t")
+
 ```
 
 El modelo de una capa con categoria positiva 'malignant' obtiene una precisi?n de `r round(cmatrix1$overall["Accuracy"], 3)` y una sensitividad y especificidad de `r round(cmatrix1$byClass["Sensitivity"], 3)` y `r round(cmatrix1$byClass["Specificity"], 3)` respectivamente.
 
-
-##Step 5 - Mejora del rendimiento del modelo
-
-El primer modelo fue con *un nodo* en la capa oculta. Ahora se plantea *3 nodos* en la capa oculta para tratar de mejorar el rendimiento.
-
-```{r frag14,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
-
-# simple ANN with only a single hidden neuron
-set.seed(params$seed.clsfier) # to guarantee repeatable results
-data_model_3 <- neuralnet(fmla,
-                          data = data_nrm.train,
-                          hidden=3,linear.output=FALSE)
-
-# visualize the network topology
-plot(data_model_3, rep='best')
-
+```{r}
+lm_cm
 ```
 
-Tambi?n se puede hacer la representaci?n usando el paquete *NeuralNetTools*
-
-```{r frag15,warning=FALSE,message=FALSE,tidy=TRUE,fig.height=4  }
-# visualize the network topology with NeuralNetTools
-plotnet(data_model_3,  prune_col = 'lightblue')
-```
-
-El resultado de la matriz de confusi?n con los datos de test es:
-
-
-```{r frag16,warning=FALSE,message=FALSE,tidy=TRUE}
-model_results_3 <- compute(data_model_3, data_nrm.test[,1:9])$net.result
-
-# Put multiple binary output to categorical output
-maxidx <- function(arr) {
-  return(which(arr == max(arr)))
-}
-
-idx <- apply(model_results_3, 1, maxidx)
-prediction <- c('malignant', 'benign')[idx]
-res <- table(prediction, dataset$Class[-train] )
-
-# Results
-#require(caret)
-(cmatrix3 <- confusionMatrix(res,positive="malignant"))
+```{r}
+gs_cm
 ```
 
 
-El nuevo modelo con 3 nodos ocultos obtiene una precisi?n de `r round(cmatrix3$overall["Accuracy"], 3)` y una sensitividad y especificidad de `r round(cmatrix3$byClass["Sensitivity"], 3)` y `r round(cmatrix3$byClass["Specificity"], 3)` respectivamente. `r if(cmatrix1$overall["Accuracy"] > cmatrix3$overall["Accuracy"]){"Vemos que el modelo obtenido con un solo nodo tiene una mayor precisi?n"}``r if(cmatrix1$overall["Accuracy"] < cmatrix3$overall["Accuracy"]){"Vemos que el modelo obtenido con tres nodo tiene una mayor precisi?n"}``r if(cmatrix1$overall["Accuracy"] == cmatrix3$overall["Accuracy"]){"Vemos que ambos modelos tienen la misma precisi?n"}`
-
-Al comparar los dos modelos si se ven resultados muy similares, se suele escoger el modelo m?s sencillo.
-
-Hay que equilibrar la complejidad y la precisi?n del modelo, ya que modelos m?s complejos tambi?n son m?s susceptibles de tener overfitting.
-
-## Paquete *caret*: modelo `nnet`
-
-La funci?n `nnet` admite datos de tipo factor, as? que no hay que transformar la variable `Class` en variables binarias. 
-
-Adem?s, se puede usar la funci?n `createDataPartition` para crear la partici?n de los datos en training/test.
-
-```{r frag17,warning=FALSE,message=FALSE}
-#library(nnet)
-
-#Partici?n de datos
-set.seed(params$seed.train)
-# We wish 75% for the trainset 
-inTrain <- createDataPartition(y=dataset$Class, p=0.66666666666666667, list=FALSE)
-#dim(inTrain)
-# Dataset normalizado
-data_nrm <- cbind(data_nrm[,1:9],Class=dataset[,10])
-
-train.set <- data_nrm[inTrain,]
-test.set  <- data_nrm[-inTrain,]
-
-#train.set <- dataset[inTrain,]
-#test.set  <- dataset[-inTrain,]
-nrow(train.set)/nrow(test.set) # should be around 2
-```
-
-**Train de 2/3 y 1/3 test**
-
-```{r frag18,warning=FALSE,message=FALSE}
-# modelo Train/test without repetition 
-model <- train(Class ~ ., train.set, method='nnet', 
-               trControl= trainControl(method='none'), 
-              # preProcess = "range",
-               tuneGrid= NULL, tuneLength=1 ,trace = FALSE) #
-
-plotnet(model)
-summary(model)
-prediction <- predict(model, test.set[-10])                           # predict
-table(prediction, test.set$Class)                                  # compare
-
-# predict can also return the probability for each class:
-prediction <- predict(model, test.set[-10], type="prob")  
-head(prediction)
-```
-
-**5-fold crossvalidation**
-
-```{r frag19,warning=FALSE,message=FALSE,fig.height=4}
-# modelo 5-crossvalidation 
-model <- train(Class ~ ., train.set, method='nnet', 
-               trControl= trainControl(method='cv', number=5), 
-               tuneGrid= NULL, tuneLength=10 ,trace = FALSE)
-
-plotnet(model, alpha=0.6)
-summary(model)
-prediction <- predict(model, test.set[-10])                           # predict
-table(prediction, test.set$Class)                                  # compare
-
-# predict can also return the probability for each class:
-prediction <- predict(model, test.set[-10], type="prob")  
-head(prediction)
-```
-
-
-**Bootstrap**
-
-```{r frag20,warning=FALSE,message=FALSE,fig.height=4}
-# Por defecto es Bootstrap, con 25 repeticiones para 3 posibles decay
-# y 3 posibles sizes
-model <- train(Class ~ ., train.set, method='nnet', trace = FALSE) # train
-# we also add parameter 'preProc = c("center", "scale"))' at train() for centering and scaling the data
-
-plotnet(model)
-summary(model)
-prediction <- predict(model, test.set[-10])                           # predict
-table(prediction, test.set$Class)                                  # compare
-
-# predict can also return the probability for each class:
-prediction <- predict(model, test.set[-10], type="prob")  
-head(prediction)
-```
-
-
-#Referencias
