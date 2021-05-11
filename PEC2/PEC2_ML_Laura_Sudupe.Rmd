@@ -40,7 +40,7 @@ options(width=90)
 
 
 ```{r packages, message=FALSE, echo=FALSE, warning=FALSE}
-libraries <- c("ggplot2" ,"caret", "e1071", "kernlab")
+libraries <- c("ggplot2" ,"caret", "e1071", "kernlab", "neuralnet", "NeuralNetTools")
 check.libraries <- is.element(libraries, installed.packages()[, 1])==FALSE
 libraries.to.install <- libraries[check.libraries]
 if (length(libraries.to.install!=0)) {
@@ -281,18 +281,21 @@ Entrenamos una red multicapa con cuatro nodos ocultos, a la que llamaremos `ANN4
 
 ```{r}
 set.seed(1234567)
-ANN4  <- neuralnet(fmla,data_train[-1],hidden=4,linear.output=FALSE)
+ANN1  <- neuralnet(fmla,
+                   data_nrm.train,
+                   hidden=1,
+                   linear.output=FALSE)
 ```
 
 ```{r}
 # representamos graficamente el modelo generado
-plot(ANN4,rep="best")  
+plot(ANN1,rep="best")  
 ```
 
 Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
 
 ```{r}
-plotnet(ANN4, alpha = 0.6)
+plotnet(ANN1, alpha = 0.6)
 ```
 
 ## Step 4 - Evaluating model performance
@@ -302,17 +305,22 @@ Una vez obtenido el modelo, se procede a clasificar las muestras test con la fun
 Para la red neuronal `ANN4`:
 
 ```{r}
-ANN4_results <- neuralnet::compute(ANN4, data_test[,2:229])$net.result
-# Funcion para transformar un output binario multiple en categorico
+ANN1_results <- neuralnet::compute(ANN1, data_nrm.test[,1:10])$net.result
+
+# Put multiple binary output to categorical output
 maxidx <- function(arr) {
   return(which(arr == max(arr)))
 }
 
-idx_4 <- apply(ANN4_results, 1, maxidx)
-prediction_4 <- c('P', 'NP')[idx_4]
-res_4 <- table(prediction_4, data_test_labels)
-res_4 <- res_4[c("P","NP"),]
-(matrix <- confusionMatrix(res_4,positive="P"))
+idx <- apply(ANN1_results, 1, maxidx)
+prediction1 <- c("ALL", "AML", "CLL", "CML", "NoL")[idx]
+res1 <- table(prediction1, data$type[-train] )
+
+# Results
+#require(caret)
+(cmatrix1 <- confusionMatrix(res1))
+
+
 ```
 
 Utilizando una red neuronal de cuatro capas ocultas con categoria positiva 'P', de un total de `r sum(matrix$t)`, hay `r matrix$t[1,1]` verdaderos positivos, `r matrix$t[2,2]` verdaderos negativos, `r matrix$t[2,1]` falsos negativos  y `r matrix$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8824 y 1, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos negativos (2) es mayor que el de falsos positivos, puesto que no hay. 
