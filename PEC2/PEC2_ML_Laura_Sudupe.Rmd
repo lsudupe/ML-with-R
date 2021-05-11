@@ -330,9 +330,11 @@ Utilizando una red neuronal de cuatro capas ocultas con categoria positiva 'P', 
 Para observar si hay una mejora, probaremos a implementar una red neuronal de cinco capas ocultas.  Llamaremos al clasificador `ANN5`:
 
 ```{r}
-set.seed(123)
-ANN5 <- neuralnet(fmla,data_train[-1],hidden=5,linear.output=FALSE)
-plot(ANN5, rep="best")
+set.seed(1234567)
+ANN5  <- neuralnet(fmla,
+                   data_nrm.train,
+                   hidden=5,
+                   linear.output=FALSE)
 ```
 
 Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
@@ -344,17 +346,22 @@ plotnet(ANN5, alpha = 0.6)
 Una vez obtenidos los modelos, se procede a clasificar las muestras test con la funcion `compute`, de la cual queremos los "net.result", que almacenan los valores predichos:
 
 ```{r}
-ANN5_results <- neuralnet::compute(ANN5, data_test[,2:229])$net.result
+ANN5_results <- neuralnet::compute(ANN5, data_nrm.test[,1:10])$net.result
 
+# Put multiple binary output to categorical output
 maxidx <- function(arr) {
   return(which(arr == max(arr)))
 }
 
-idx_5 <- apply(ANN5_results, 1, maxidx)
-prediction_5 <- c('P', 'NP')[idx_5]
-res_5 <- table(prediction_5, data_test_labels)
-res_5 <- res_5[c("P","NP"),]
-(matrix5 <- confusionMatrix(res_5,positive="P"))
+idx <- apply(ANN5_results, 1, maxidx)
+prediction5 <- c("ALL", "AML", "CLL", "CML", "NoL")[idx]
+res5 <- table(prediction5, data$type[-train] )
+
+# Results
+#require(caret)
+(cmatrix5 <- confusionMatrix(res5))
+
+
 ```
 
 Utilizando una red neuronal de cinco capas ocultas con categoria positiva 'P', de un total de `r sum(matrix5$t)`, hay `r matrix5$t[1,1]` verdaderos positivos, `r matrix5$t[2,2]` verdaderos negativos, `r matrix5$t[2,1]` falsos negativos  y `r matrix5$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix5$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix5$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8235 y 0.8889, respectivamente. Este algoritmo clasifica bien 30 de 35 secuencias, mientras que el numero de falsos negativos (3) es mayor que el de falsos positivos (2). En terminos generales, podemos ver que la red neuronal con cinco capas ocultas parece funcionar peor que la de cuatro capas ocultas.
