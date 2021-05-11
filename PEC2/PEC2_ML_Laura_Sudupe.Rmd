@@ -368,6 +368,54 @@ Utilizando una red neuronal de cinco capas ocultas con categoria positiva 'P', d
 
 La red neuronal de cuatro capas ocultas es el mejores clasificador de secuencias promotoras hasta ahora.
 
+
+## *caret* packagev: `nnet` model
+
+La funci?n `nnet` admite datos de tipo factor, as? que no hay que transformar la variable `Class` en variables binarias. 
+
+Adem?s, se puede usar la funci?n `createDataPartition` para crear la partici?n de los datos en training/test.
+
+```{r frag17,warning=FALSE,message=FALSE}
+library(nnet)
+
+#Partici?n de datos
+set.seed(params$seed.train)
+# We wish 75% for the trainset 
+inTrain <- createDataPartition(y=data$type, p=0.66666666666666667, list=FALSE)
+#dim(inTrain)
+
+# Dataset normalizado
+data_nrm_net <- cbind(data_nrm[,1:10],type=data[,11])
+
+train.set_net <- data_nrm_net[inTrain,]
+test.set_net  <- data_nrm_net[-inTrain,]
+
+#train.set <- dataset[inTrain,]
+#test.set  <- dataset[-inTrain,]
+nrow(train.set_net)/nrow(test.set_net) # should be around 2
+```
+
+
+**3-fold crossvalidation**
+
+```{r frag19,warning=FALSE,message=FALSE,fig.height=4}
+# modelo 5-crossvalidation 
+model_net3_cross <- train(type ~ ., train.set_net, method='nnet', 
+               trControl= trainControl(method='cv', number=3), 
+               tuneGrid= NULL, tuneLength=10 ,trace = FALSE)
+
+plotnet(model_net3_cross, alpha=0.6)
+summary(model_net3_cross)
+prediction_net3_cross <- predict(model_net3_cross, test.set_net[-11])           # predict
+table(prediction_net3_cross, test.set_net$type)                                  # compare
+
+# predict can also return the probability for each class:
+prediction_net3_cross_pro <- predict(model_net3_cross, test.set_net[-11], type="prob")  
+head(prediction_net3_cross_pro)
+```
+
+
+
 # Support Vector Machine (SVM)
 
 A **Support Vector Machine (SVM)** can be imagined as a surface that creates a boundary between points of data plotted in multidimensional that represent examples and their feature values. The goal of a SVM is t create a flat boundary called **hyperplane**, which divides the space to create fairly homogeneus partitions on either side. In this way, the SVM learning combines aspects of both the instance-based nearest neighbor learning and the linear regression modeling. The combination is extremly powerful, allowing SVMs to model highly complex relationships.
