@@ -106,8 +106,8 @@ Ya que muchos clasificadores de machine learning necesitan que la caracteristica
 
 ```{r}
 #llamaremos P a las secuencias promotoras y NP a las no promotoras
-data$x <- factor(data$x, levels = c(1,2,3,4),
-                         labels = c("ALL", "AML", "CML", "NoL"))
+data$x <- factor(data$x, levels = c(1,2,3,4,5),
+                         labels = c("ALL", "AML", "CLL", "CML", "NoL"))
 #llamamos clase a la columna V1
 names(data)[11] <- "type"
 ```
@@ -141,6 +141,8 @@ return((x - min(x)) / (max(x) - min(x)))
 }
 
 data_nrm <- as.data.frame(lapply(data[,-11],normalize))
+
+summary(data_nrm)
 
 ```
 
@@ -195,8 +197,13 @@ Ahora se crean tantas variables binarias como categorias tiene la variable `clas
 
 ```{r}
 # Creacion de variables binarias a partir de la variable factor
-promoters_encoding$P <- promoters_encoding$clase=="P"
-promoters_encoding$NP <- promoters_encoding$clase=="NP"
+
+data_nrm$ALL <- data$type=="ALL"
+data_nrm$AML <- data$type=="AML"
+data_nrm$CLL <- data$type=="CLL"
+data_nrm$CML <- data$type=="CML"
+data_nrm$NoL <- data$type=="NoL"
+
 ```
 
 
