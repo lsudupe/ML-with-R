@@ -82,10 +82,15 @@ Importamos tambien el fichero `promoters_onehot` que ya contiene las secuencias 
 # import the csv
 
 file <- "pcaComponents7.csv"
+file2 <- "class7.csv"
 pca_comp <- read.csv(file, header=TRUE)
 pca_10comp <- pca_comp[,1:10]
 
-promoters_onehot <- read.csv("D:/BIOINFORMATICS MASTER/Machine Learning/PECS/PEC3/promoters_onehot.txt", sep="")
+tumor_type <- read.csv(file2, header=TRUE)
+
+data <- cbind.data.frame(pca_10comp, tumor_type)
+
+
 ```
 
 ## Step 2- Exploring and preparing the data 
@@ -94,28 +99,28 @@ Usando el comando `str()`, observamos que el conjunto de datos promoters contien
 
 ```{r}
 # examinando la estructura del dataset
-str(promoters)
+str(data)
 ```
 
 Ya que muchos clasificadores de machine learning necesitan que la caracteristica diana sea codificada como factor, lo primero que tenemos que hacer es comprobar si la variable `V1`, que corresponde a la clase, es un factor. Esta variable corresponde a la primera columna del data frame `promoters` y que como deciamos previamente contiene el simbolo + si es un promotor o el simbolo - si no lo es. No lo es, por lo que lo codificamos:
 
 ```{r}
 #llamaremos P a las secuencias promotoras y NP a las no promotoras
-promoters$V1 <- factor(promoters$V1, levels = c("+", "-"),
-                         labels = c("P", "NP"))
+data$x <- factor(data$x, levels = c(1,2,3,4),
+                         labels = c("ALL", "AML", "CML", "NoL"))
 #llamamos clase a la columna V1
-names(promoters)[1] <- "clase"
+names(data)[11] <- "type"
 ```
 
 Comprobamos:
 
 ```{r}
-class(promoters$clase)
+class(data$type)
 ```
 Podemos observar cuantas secuencias son promotoras o no promotoras en este data frame:
 
 ```{r}
-table(promoters$clase)
+table(data$type)
 ```
 Y las propociones:
 
@@ -126,29 +131,16 @@ round(prop.table(table(promoters$clase)) * 100, digits = 1)
 Podemos ver que 49.5% de las secuencias no son promotores, mientras que el 50.5% restante si lo son.
 
 
-### Transformacion - Representacion de las secuencias de nucleotidos utilizando funcion de codificacion one hot
+### Transformacion - Normalization
 
 Para implementar una transformacion one-hot encoding de las secuencias del fichero de datos `promoters`, generamos la funcion `hot_enc()` en R:
 
 ```{r}
-#dentro de la funcion, generamos el vector "nucleotidos" que contiene los 4 nucleotidos diferentes 
-# tambien generamos un vector "seq" que nos indica las posiciones de inicio de cada vector de 4 bit, que a su vez corresponde a cada nucleotido de una secuencia
-# generamos un vector de 0 que llamaremos "final_vector" y cuyas dimensiones son el numero de filas del data frame sobre el cual ejecutaremos la funcion, mientras que el numero de columnas surge de multiplicar la longitud del vector nucleotidos, es decir, 4, por el numero de nucleotidos que se contienen, en este caso, en cada secuencia (es decir, 57).
-#en el primer loop le decimos que tenga en cuenta, uno a uno, tantos valores del data frame como filas tiene
-#en el segundo loop le indicamos que tenga en cuenta, uno a uno, todos los nucleotidos que se incluyen en cada secuencia, los cuales se encuentran en la tercera columna del data frame. Ademas, le pedimos que nos genere, para cada uno, un vector de 4 bits, en el cual aparezca 1 en la posicion que ocupa el nucleotido seleccionado de acuerdo al orden establecido por el vector "nucleotidos". Una vez haya hecho eso para el primer nucleotido de la secuencia, gracias al primer loop, lo hacemos en cada valor de dicha columna, generando un "final_vector" modificado. 
-promoters$V3 <- as.character(promoters$V3)
-hot_enc <- function(x) {
-nucleotidos <- c("t", "c", "g", "a")
-seq <- c(0,4,8,12,16,20,24,28,32,36,40,44,48,52,56,60,64,68,72,76,80,84,88,92,96,100,104,108,112,116,120,124,128,132,136,140,144,148,152,156,160,164,168,172,176,180,184,188,192,196,200,204,208,212,216,220,224,228)
-final_vector <- matrix(0,nrow(x),(length(nucleotidos)* max(nchar(x$V3))))
-for (i in 1:nrow(x)){
-  for (j in 1:nchar(x$V3[i])){
-    position <- which(regexpr(substr(x$V3[i],j,j),nucleotidos)==1)
-    final_vector[i,position+seq[j]]<-1
-  }
+normalize <- function(x) {
+return((x - min(x)) / (max(x) - min(x)))
 }
-  return(final_vector)
-}
+
+data_nrm <- as.data.frame(lapply(data[,-11],normalize))
 
 ```
 
