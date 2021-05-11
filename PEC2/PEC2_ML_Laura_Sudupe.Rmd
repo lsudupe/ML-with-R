@@ -216,9 +216,15 @@ Dividimos en dos partes `promoters_encoding`: un conjunto de datos de training `
 Utilizaremos el 67% de los datos para training y el 33% para testing. La seleccion de cada muestra se realiza de manera aleatoria, utilizando el valor de la semilla = 123, lo que nos permite reproducir mas tarde estos mismos data frames que se van a originar de manera aleatoria. En el data frame `sample_train`, la funcion `sample ()` selecciona, al azar, el 67% del total de filas (`r nrow(onehot_encoding)`)
 
 ```{r}
-set.seed(123)
-sample_train <- sample(nrow(promoters_encoding), nrow(promoters_encoding) * 0.67)
-str(sample_train)
+# create training and test data
+set.seed(params$seed.train)
+
+train <- sample(nrow(data_nrm),floor(nrow(data_nrm)*params$p.train))
+
+data_nrm.train <- data_nrm[train,]
+data_nrm.test  <- data_nrm[-train,]
+
+
 ```
 
 Como podemos observar, el objeto `sample_train` es un vector de 70 numeros enteros aleatorios.
@@ -267,14 +273,14 @@ La formula del modelo tiene 228 nodos de entrada (resultado de la codificacion o
 
 ```{r}
 ## creamos una formula para un modelo con un gran numero de variables
-xnam <- names(promoters_encoding[,2:229])
-(fmla <- as.formula(paste("P + NP ~ ", paste(xnam, collapse= "+"))))
+xnam <- names(data_nrm[1:10])
+(fmla <- as.formula(paste("ALL + AML + CLL + CML + NoL ~ ", paste(xnam, collapse= "+"))))
 ```
 
 Entrenamos una red multicapa con cuatro nodos ocultos, a la que llamaremos `ANN4`, y examinamos su topologia
 
 ```{r}
-set.seed(123)
+set.seed(1234567)
 ANN4  <- neuralnet(fmla,data_train[-1],hidden=4,linear.output=FALSE)
 ```
 
