@@ -1,5 +1,5 @@
 ---
-title: 'PEC2'
+title: 'Classification and diagnostic rpediction of cancers using gene expression profiling and artificial neural networks'
 author: Laura Sudupe Medinilla
 subtitle: '`r params$subtitulo`'
 date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
@@ -25,14 +25,15 @@ output:
 header-includes:
   - \usepackage[spanish]{babel}
 params:
-  file: colon2.csv
+  file: pcaComponents7.csv
   p.train: 0.6666667
-  subtitulo: Predict tumor type depending tissues genetic expression
+  subtitulo: PEC2
   seed.train: 12345
   seed.clsfier: 1234567
 ---
 
 ```{r setup, include=FALSE}
+#With this chunck when we run the scripts it creates folders to save the results. When we run again the script only run the changed code. Good option when our script has a high computational cost
 knitr::opts_chunk$set(echo = TRUE, comment = NULL, cache=TRUE)
 options(width=90)
 ```
@@ -52,60 +53,42 @@ if(length(success) != length(libraries)) {stop("A package failed to return a suc
 
 
 
-```{r setup, include=FALSE}
-#Con esta opcion al ejecutar el informe dinamico crea unas carpetas donde se guardan los resultados de los procesos. Cuando se vuelve a ejecutar de nuevo el informe dinamico solo ejecuta codigo R donde se ha producido cambios, en el resto lee la informacion previamente descargada. Es una opcion muy adecuada cuando la ejecucion es muy costosa computacionalmente
-knitr::opts_chunk$set(echo = TRUE, cache = TRUE)
-```
+# Objetive
+
+In this PEC we are going to do a dinamic report where we are going to analize an experiment related with the prediction of four different cancer types and healthy patients.
+For these purpose, we are going to analize the data with the implementation of two different algorithms: `Artificial Neural Network` and `Support Vector Machine` to predict the type.
 
 
-# Prediccion de secuencias promotoras de E.Coli utilizando diferentes algoritmos de clasificacion
 
-Los promotores son secuencias de ADN que afectan la frecuencia y ubicacion del inicio de la transcripcion a traves de la interaccion con la ARN polimerasa.
+# Introduction
 
-Este estudio se basa en los ficheros obtenidos de:
+The first and second step are the same for both algorithms so we are going to do them in the first place. After this, we are going to explain briefly both algorithms.We are going to add a table with their strenghs and weaknesess to understand better the posibilities. Inside the algorithmns part, we are going to process with three different steps:
 
-@Dua:2019
+- Model training with the data
+- Model performance evaluation
+- Model improvement
 
-Para mas informacion, se puede recurrir a la siguiente referencia acerca del estudio de promotores en E. Coli: 
+In both cases, we are going to analyze the algorithms quality and performance with the `confusionMatrix()` function from **caret** package. At the end, we are going to add a conclusion and discussion section.
 
-@harley1987analysis
 
-Los atributos del fichero de datos son:
+## Step 1 - Collecting the data 
 
-1. Un simbolo de {+/-}, indicando la clase (+ = promotor).
 
-2. El nombre de la secuencia promotora. Las instancias que corresponden a no promotores se denominan por la posicion genomica.
-
-3. Las restantes 57 posiciones corresponden a la secuencia.
-
-La manera elegida para representar los datos es un paso crucial en los algoritmos de clasificacion. En el caso que nos ocupa, analisis basados en secuencias, se usara la transformacion denominada one-hot encoding. El one-hot encoding representa cada nucleotido por un vector de 4 componentes, con 3 de ellas a 0 y una a 1 indicando el nucleotido. Pongamos por ejemplo, el nucleotido T se representa por (1,0,0,0), el nucleotido C por (0,1,0,0), el nucleotido G por (0,0,1,0) y el nucleotido A por (0,0,0,1). Por tanto, para una secuencia de 57 nucleotidos, como en nuestro caso, se obtendra un vector de 4*57=228 componentes, resultado de concatenar los vectores para cada uno de los 57 nucleotidos.
-
-Una vez realizada la transformacion one-hot encoding, el objetivo se trata de implementar distintos algoritmos vistos en el curso para predecir si la secuencia es un promotor o no, y comparar sus rendimientos
-
-# Objetivo
-
-En esta PEC se analizan esto datos mediante la implementacion de los diferentes algoritmos estudiados: `k-Nearest Neighbour`,`Naive Bayes`,`Artificial Neural Network`, `Support Vector Machine`, `Arbol de Decision` y `Random Forest` para predecir si una secuencia de ADN es promotor o no.
-
-# Introduccion
-
-Los pasos 1 (Recoleccion de datos) y 2 (Exploracion y preparacion de los datos) son comunes a todos los algoritmos, por lo que son realizados inicialmente. Posteriormente se realiza una breve explicacion del funcionamiento de cada algoritmo y sus caracterisiticas. Ademas, se presenta una tabla de sus fortaleza y debilidades. Dentro del apartado que hace mencion a cada algoritmo, se realizan los pasos: 3 (Entrenamiento del modelo en los datos), 4 (Evaluacion del rendimiento del modelo) y 5 (Mejora del rendimiento del modelo), que son especificos de cada algoritmo.
-
-En todos los casos se evalua la calidad del algoritmo con la informacion obtenida de la funcion `confusionMatrix()` del paquete **caret**.
-
-Por ultimo, hay un apartado de conclusion y discusion sobre el rendimiento, interpretabilidad, ... de los algoritmos para el problema tratado, proponiendo que modelo o modelos son los mejores.
-
-## Paso 1 - Recoleccion de los datos
 
 Importamos el fichero "promoters.txt" que se nos proporciona y el cual contiene en la primera columna el simbolo indicando la clase (+ = promotor); en la segunda columna el nombre de la secuencia promotora, denominandose las instancias que corresponden a no promotores por la posicion genomica; y en la tercera columna los 57 nucleotidos de cada secuencia.
 Importamos tambien el fichero `promoters_onehot` que ya contiene las secuencias codificadas segun un one-hot, pero tan solo se utilizara como comprobacion de resultados. 
 
 ```{r, echo=FALSE}
-# importamos los documentos CSV
-promoters <- read.csv("D:/BIOINFORMATICS MASTER/Machine Learning/PECS/PEC3/promoters.txt", header=FALSE)
+# import the csv
+
+file <- "pcaComponents7.csv"
+pca_comp <- read.csv(file, header=TRUE)
+pca_10comp <- pca_comp[,1:10]
+
 promoters_onehot <- read.csv("D:/BIOINFORMATICS MASTER/Machine Learning/PECS/PEC3/promoters_onehot.txt", sep="")
 ```
 
-## Paso 2- Exploracion y transformacion de los datos 
+## Step 2- Exploring and preparing the data 
 
 Usando el comando `str()`, observamos que el conjunto de datos promoters contiene `r nrow(promoters)` filas, que corresponden a las secuencias y `r ncol(promoters)` columnas, como mencionabamos previamente.  Las primeras 6 lineas del output son: 
 
@@ -211,7 +194,7 @@ El identificador no lo necesitamos para nada, por lo que lo eliminamos:
 promoters_encoding <- promoters_encoding[,-2]
 ```
 
-### Creacion de variables binarias en lugar de la variable factor
+### Binary variable creation instead of the factor class variables
 
 La funcion `neuralnet()` que utilizaremos para el algoritmo de redes neuronales artificiales, no admite variables factor o categoricas. Por tanto, hay que transformar la variable `clase` que indica el tipo de secuencia  (promotora o no promotra) a binaria. Para este cometido, se deben crear dos variables que sustituyen a la variable original. Una sera la variable promotor (P) que tiene valores (TRUE o 1) en los casos P y (FALSE o 0) en los casos NP. De manera semejante, se crea la variable no promotor (NP). 
 
@@ -225,7 +208,7 @@ promoters_encoding$NP <- promoters_encoding$clase=="NP"
 ```
 
 
-### Creacion de los conjuntos de datos training y testing
+### Creating training and test datasets
 
 Para generar los conjuntos de datos, utilizamos el data frame `promoters_encoding`, en el que cada fila es una secuencia de nucleotidos, y el orden es el mismo que el establecido en el data frame `promoters`
 
@@ -258,7 +241,7 @@ Como podemos observar, el objeto `data_train` es un data frame de `r nrow(data_t
 
 
 
-# Algoritmo Red Neuronal Artificial (ANN)
+# Neural Networks algorithm (ANN)
 
 # Naive Bayes Algorithm 
 
@@ -273,7 +256,7 @@ The *Artificial Neural Network (ANN)* models the relationship between a set of i
 
 
 
-## Paso 3 - Entrenamiento del modelo en los datos
+## Step 3 - Training a model on the data
 
 Las redes neuronales funcionan mejor cuando los datos de entrada se escalan a un rango estrecho alrededor de cero. Puesto que en este caso tan solo tenemos valores de 0 o 1, no es necesario normalizar.
 
@@ -307,7 +290,7 @@ Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
 plotnet(ANN4, alpha = 0.6)
 ```
 
-## Paso 4 - Evaluacion del rendimiento del modelo
+## Step 4 - Evaluating model performance
 
 Una vez obtenido el modelo, se procede a clasificar las muestras test con la funcion `compute`, la cual devuelve una lista con dos componentes: "neurons", que almacena los nodos para cada capa en la red y "net.result", que almacena los valores predichos. Queremos esto ultimo.
 
@@ -329,7 +312,7 @@ res_4 <- res_4[c("P","NP"),]
 
 Utilizando una red neuronal de cuatro capas ocultas con categoria positiva 'P', de un total de `r sum(matrix$t)`, hay `r matrix$t[1,1]` verdaderos positivos, `r matrix$t[2,2]` verdaderos negativos, `r matrix$t[2,1]` falsos negativos  y `r matrix$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8824 y 1, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos negativos (2) es mayor que el de falsos positivos, puesto que no hay. 
 
-## Paso 5 - Mejora del rendimiento del modelo
+## Step 5 - Model improvement
 
 Para observar si hay una mejora, probaremos a implementar una red neuronal de cinco capas ocultas.  Llamaremos al clasificador `ANN5`:
 
@@ -376,7 +359,7 @@ A **Support Vector Machine (SVM)** can be imagined as a surface that creates a b
 | - May be easier to use than neural networks, particularly due to the existence of several well-supported SVM algorithms | - Results in a complex black box model that is difficult, if not impossible, to interpret
 | - Gaining popularity due to its high accuracy and high-profile wins in data mining competitions
 
-## Paso 3 - Entrenamiento del modelo en los datos
+## Step 3 - Training a model on the data
 
 Utilizaremos la funcion `ksvm()` del paquete `kernlab` para entrenar al modelo SVM, utilizando el dataset `data_train`
 
@@ -389,7 +372,7 @@ lm <- ksvm(clase ~ ., data = data_train[,1:229],kernel = "vanilladot")
 lm
 ```
 
-## Paso 4 - Evaluacion del rendimiento del modelo
+## Step 4 - Evaluating model performance
 
 La funcion `predict()` nos permite utilizar los modelos de clasificacion previamente generados para hacer predicciones en el dataset de testing `data_test`
 
@@ -411,7 +394,7 @@ cm
 Utilizando un modelo SVM lineal con categoria positiva 'P', de un total de `r sum(cm$t)`, hay `r cm$t[1,1]` verdaderos positivos, `r cm$t[2,2]` verdaderos negativos, `r cm$t[2,1]` falsos negativos  y `r cm$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.8333, respectivamente. Este algoritmo clasifica bien 31 de 35 secuencias, mientras que el numero de falsos positivos (3) es mayor que el de falsos negativos (1). 
 
 
-## Paso 5 - Mejora del rendimiento del modelo
+## Step 5 - Improvement the model
 
 Ahora se plantea SVM con un el kernel Gaussiano, `rbfdot` para tratar de mejorar el rendimiento:
 
@@ -447,4 +430,4 @@ De acuerdo a las matrices de confusion, en las que siempre se ha otorgado a la s
 
 Con estos datos, podemos afirmar que los algoritmo k-NN son los menos optimos para clasificar secuencias promotoras con los datos del estudio, si bien es cierto que la precision no es extremadamente baja. El resto de clasificadores obtienen una precision bastante alta, pero sin duda, parece que el mejor algoritmo de clasificacion es el de arboles de decision, ya que parecen no cometer ningun error en las predicciones.Por supuesto, harian falta mas medidas de rendimiento para confirmar estos resultados, ya que tan solo con la eficiencia (o incluso con sensibilidad y especificidad) podemos estar perdiendonos informacion esecial y sobrevalorar o infravalorar un clasificador.
 
-# Referencias
+
