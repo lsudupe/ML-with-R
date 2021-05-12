@@ -114,9 +114,14 @@ Ya que muchos clasificadores de machine learning necesitan que la caracteristica
 data$x <- factor(data$x, levels = c(1,2,3,4,5),
                          labels = c("ALL", "AML", "CLL", "CML", "NoL"))
 
+data_svm$x <- factor(data_svm$x, levels = c(1,2,3,4,5),
+                         labels = c("ALL", "AML", "CLL", "CML", "NoL"))
+
 #change in the both cases the "x" column name to "type"
 names(data)[11] <- "type"
 names(data_svm)[ncol(data_svm)] <- "type"
+
+
 
 ```
 
@@ -164,6 +169,7 @@ data_nrm$CLL <- data$type=="CLL"
 data_nrm$CML <- data$type=="CML"
 data_nrm$NoL <- data$type=="NoL"
 
+
 ```
 
 In the case of the data for the SVM algorithm, it requires all features to be numeric. In this case, every feature is an intefer, so we do not need to convert any factor into numbers
@@ -186,29 +192,12 @@ data_nrm.test  <- data_nrm[-train,]
 
 # create training and test data SVM
 
+data_svm$type <- as.factor(data_svm$type)
 train_svm <- sample(nrow(data_svm),floor(nrow(data_svm)*params$p.train))
 data_svm.train <- data_svm[train_svm,]
 data_svm.test  <- data_svm[-train_svm,]
 
 ```
-
-Como podemos observar, el objeto `sample_train` es un vector de 70 numeros enteros aleatorios.
-
-Utilizando este vector, seleccionamos las filas de los datos de `promoters_encoding` y los dividimos en los conjuntos de datos `data_train` del 67% y `data_test` del 33%.
-
-```{r}
-data_train <- promoters_encoding[sample_train, ]
-# al utilizar el operador minus previo a sample_train al generar la muestra de testing, le decimos a R que seleccione los registros que no estan en las filas especificadas; es decir, los datos de testing incluyen solo las filas que no estan en la muestra de training.
-data_test <- promoters_encoding[-sample_train, ]
-
-# Creo dos vectores con las clases, es decir, la columna 1 del data frame promoters_encoding en el cual aparece P o NP de acuerdo a si la secuencia de nucleotidos era promotor o no 
-vector <- promoters_encoding[, 1]
-data_train_labels <- vector[sample_train]
-data_test_labels <- vector[-sample_train]
-```
-
-Como podemos observar, el objeto `data_train` es un data frame de `r nrow(data_train)` secuencias aleatorias con codificacion one-hot, mientras que `data_test` contiene las otras `r nrow(data_test)` secuencias.
-
 
 
 # Neural Networks algorithm (ANN)
@@ -311,6 +300,8 @@ plotnet(ANN5, alpha = 0.6)
 Una vez obtenidos los modelos, se procede a clasificar las muestras test con la funcion `compute`, de la cual queremos los "net.result", que almacenan los valores predichos:
 
 ```{r}
+set.seed(1234567)
+
 ANN5_results <- neuralnet::compute(ANN5, data_nrm.test[,1:10])$net.result
 
 # Put multiple binary output to categorical output
@@ -340,7 +331,7 @@ La funci?n `nnet` admite datos de tipo factor, as? que no hay que transformar la
 
 Adem?s, se puede usar la funci?n `createDataPartition` para crear la partici?n de los datos en training/test.
 
-```{r frag17,warning=FALSE,message=FALSE}
+```{r}
 library(nnet)
 
 #Partici?n de datos
@@ -355,15 +346,16 @@ data_nrm_net <- cbind(data_nrm[,1:10],type=data[,11])
 train.set_net <- data_nrm_net[inTrain,]
 test.set_net  <- data_nrm_net[-inTrain,]
 
-#train.set <- dataset[inTrain,]
-#test.set  <- dataset[-inTrain,]
 nrow(train.set_net)/nrow(test.set_net) # should be around 2
 ```
 
 
 **3-fold crossvalidation**
 
-```{r frag19,warning=FALSE,message=FALSE,fig.height=4}
+```{r}
+
+set.seed(1234567)
+
 # modelo 5-crossvalidation 
 model_net3_cross <- train(type ~ ., train.set_net, method='nnet', 
                trControl= trainControl(method='cv', number=3), 
@@ -394,34 +386,31 @@ A **Support Vector Machine (SVM)** can be imagined as a surface that creates a b
 
 ## Step 3 - Training a model on the data
 
-Utilizaremos la funcion `ksvm()` del paquete `kernlab` para entrenar al modelo SVM, utilizando el dataset `data_train`
+We are going to use the  `ksvm()` function from `kernlab` package to train the SVM model. We are going to build a linear model with the kernel value `vanilladot`
 
-Se construye el modelo mas sencillo: lineal usando como kernel el valor `vanilladot`
 
 ```{r}
-# no utilizaremos las dos ultimas columnas ya que tan solo eran necesarias para el entrenamiento de las redes neuronales
-set.seed(123)
-lm <- ksvm(clase ~ ., data = data_train[,1:229],kernel = "vanilladot")
+set.seed(1234567)
+
+lm <- ksvm( type ~ ., data = data_svm.train,kernel = "vanilladot")
 lm
 ```
 
 ## Step 4 - Evaluating model performance
 
-La funcion `predict()` nos permite utilizar los modelos de clasificacion previamente generados para hacer predicciones en el dataset de testing `data_test`
+The `predict()` function allows us to use the classification model to make predictions on the testing dataset `data_svm.test`
+
 
 ```{r}
-#la opcion type especifica si la prediccion es "response" (la clase predicha) o "probabilities" (la probabilidad predicha, una columna por nivel de clase)
-#por defecto, la funcion predict() tiene type="response"
-# no utilizaremos las dos ultimas columnas ya que tan solo eran necesarias para el entrenamiento de las redes neuronales
-pre <- predict(lm, data_test[,1:229])
-pre
+pre_lm <- predict(lm, data_svm.test)
+pre_lm
 ```
 
 
 ```{r}
 #la categoria positiva es promotor (P)
-cm <- confusionMatrix(pre, data_test_labels, positive = "P")
-cm
+cm_lm <- confusionMatrix(pre_lm, data_svm.test$type)
+cm_lm
 ```
 
 Utilizando un modelo SVM lineal con categoria positiva 'P', de un total de `r sum(cm$t)`, hay `r cm$t[1,1]` verdaderos positivos, `r cm$t[2,2]` verdaderos negativos, `r cm$t[2,1]` falsos negativos  y `r cm$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.8333, respectivamente. Este algoritmo clasifica bien 31 de 35 secuencias, mientras que el numero de falsos positivos (3) es mayor que el de falsos negativos (1). 
@@ -429,23 +418,25 @@ Utilizando un modelo SVM lineal con categoria positiva 'P', de un total de `r su
 
 ## Step 5 - Improvement the model
 
-Ahora se plantea SVM con un el kernel Gaussiano, `rbfdot` para tratar de mejorar el rendimiento:
+We are going to do the same but with a Gaussian kernel `rbfdot` to try to improve the model performance
+
 
 ```{r}
-set.seed(123)
-lm_g <- ksvm(clase ~ ., data = data_train[,1:229], kernel='rbfdot')
-lm_g
+set.seed(1234567)
+
+gs <- ksvm(type ~ ., data = data_svm.train, kernel='rbfdot')
+gs
 ```
 
 ```{r}
-pre_g <- predict(lm_g, data_test[,1:229])
-pre_g
+pre_gs <- predict(gs, data_svm.test)
+pre_gs
 ```
 
 ```{r}
 #la categoria positiva es promotor (P)
-cm_g <- confusionMatrix(pre_g, data_test_labels, positive = "P")
-cm_g
+cm_gs <- confusionMatrix(pre_gs, data_svm.test$type)
+cm_gs
 ```
 
 Utilizando un modelo SVM gausiano con categoria positiva 'P', de un total de `r sum(cm_g$t)`, hay `r cm_g$t[1,1]` verdaderos positivos, `r cm_g$t[2,2]` verdaderos negativos, `r cm_g$t[2,1]` falsos negativos  y `r cm_g$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm_g$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm_g$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.9444, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos positivos y falsos negativos es bajo, tan solo 1 por cada uno. En terminos de eficiencia, el modelo ha mejorado con respecto al SVM lineal, puesto que clasifica bien 2 secuencias mas. Tambien aumenta la especificidad utilizando este algoritmo con respecto al lineal.
