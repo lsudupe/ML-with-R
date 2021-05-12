@@ -83,13 +83,17 @@ Importamos tambien el fichero `promoters_onehot` que ya contiene las secuencias 
 
 file <- "pcaComponents7.csv"
 file2 <- "class7.csv"
+file3 <- "data7.csv"
+
 pca_comp <- read.csv(file, header=TRUE)
 pca_10comp <- pca_comp[,1:10]
 
 tumor_type <- read.csv(file2, header=TRUE)
 
-data <- cbind.data.frame(pca_10comp, tumor_type)
+data_original <- read.csv(file3, header = TRUE)
 
+data <- cbind.data.frame(pca_10comp, tumor_type)
+data_svm <- cbind.data.frame(data_original, tumor_type)
 
 ```
 
@@ -100,103 +104,59 @@ Usando el comando `str()`, observamos que el conjunto de datos promoters contien
 ```{r}
 # examinando la estructura del dataset
 str(data)
+str(data_svm)
 ```
 
 Ya que muchos clasificadores de machine learning necesitan que la caracteristica diana sea codificada como factor, lo primero que tenemos que hacer es comprobar si la variable `V1`, que corresponde a la clase, es un factor. Esta variable corresponde a la primera columna del data frame `promoters` y que como deciamos previamente contiene el simbolo + si es un promotor o el simbolo - si no lo es. No lo es, por lo que lo codificamos:
 
 ```{r}
-#llamaremos P a las secuencias promotoras y NP a las no promotoras
+#We are going to change the "x" column type and name
 data$x <- factor(data$x, levels = c(1,2,3,4,5),
                          labels = c("ALL", "AML", "CLL", "CML", "NoL"))
-#llamamos clase a la columna V1
+
+#change in the both cases the "x" column name to "type"
 names(data)[11] <- "type"
+names(data_svm)[ncol(data_svm)] <- "type"
+
 ```
 
-Comprobamos:
+Let's comprobate
 
 ```{r}
 class(data$type)
 ```
-Podemos observar cuantas secuencias son promotoras o no promotoras en este data frame:
+We can check the number of tumor types in each case
 
 ```{r}
 table(data$type)
 ```
-Y las propociones:
-
-```{r}
-round(prop.table(table(promoters$clase)) * 100, digits = 1)
-```
-
-Podemos ver que 49.5% de las secuencias no son promotores, mientras que el 50.5% restante si lo son.
 
 
 ### Transformacion - Normalization
 
-Para implementar una transformacion one-hot encoding de las secuencias del fichero de datos `promoters`, generamos la funcion `hot_enc()` en R:
+In both cases, we need to normalize our data, in the case of SVM, the R package we will use for fitting the model will perform the rescaling automaticaly, instead no in the neural network model.
+
 
 ```{r}
+
+#Our normalization function
 normalize <- function(x) {
 return((x - min(x)) / (max(x) - min(x)))
 }
 
 data_nrm <- as.data.frame(lapply(data[,-11],normalize))
-
 summary(data_nrm)
 
 ```
 
-Y ahora utilizamos dicha funcion en el data frame `promoters`, y al vector final le llamaremos `onehot_encoding`
-
-```{r}
-hot_enc(promoters) -> onehot_encoding
-#las dimensiones de este vector deben ser 105 filas (numero de secuencias) y 228 columnas (57 nucleotidos en cada secuencia y cada uno genera un vector de 4 bit)
-#convertimos los valores numericos en valores enteros
-onehot_encoding <- data.frame(onehot_encoding)
-onehot_encoding <- lapply(onehot_encoding, as.integer)
-onehot_encoding <- data.frame(onehot_encoding)
-```
-
-```{r, echo=FALSE}
-write.csv(onehot_encoding, "onehot_encoding.csv", quote = FALSE, row.names = FALSE)
-```
-
-Ahora eliminamos la tercera columna del data frame `promoters` y unimos las 2 columnas restantes con el data frame `onehot_encoding`, generando uno nuevo llamado `promoters_enconding`
-
-```{r}
-promoters_encoding <- cbind(promoters[,1:2], onehot_encoding)
-```
-
-Utilizamos de nuevo el comando `str()` y observamos que ahora el conjunto de datos `promoters_enconding` contiene las mismas filas que antes: `r nrow(promoters_encoding)`, pero `r ncol(promoters_encoding)` columnas.  Las primeras 6 lineas del output son: 
-
-```{r}
-# examinando la estructura de los datasets impensData y schillingData
-str(promoters_encoding, list.len=6)
-```
-
-Comprobamos si el data frame `promoters_enconding` generado gracias a la funcion implementada en `promoters` es igual al data frame que se nos proporcionaba en el enunciado ya con el one-hot encoding realizado (`promoters_onehot`)
-
-```{r}
-str(promoters_onehot, list.len=6)
-```
-
-Observamos que tanto el numero de filas y de columnas, como el tipo de variables (salvo la variable class que no ha sido codificada aun como factor) y los valores son iguales. Por lo tanto, a partir de ahora, podemos utilizar cualquier de los dos data frames. Yo utilizare `promoters_enconding`
-
-El identificador no lo necesitamos para nada, por lo que lo eliminamos:
-
-```{r}
-promoters_encoding <- promoters_encoding[,-2]
-```
 
 ### Binary variable creation instead of the factor class variables
 
-La funcion `neuralnet()` que utilizaremos para el algoritmo de redes neuronales artificiales, no admite variables factor o categoricas. Por tanto, hay que transformar la variable `clase` que indica el tipo de secuencia  (promotora o no promotra) a binaria. Para este cometido, se deben crear dos variables que sustituyen a la variable original. Una sera la variable promotor (P) que tiene valores (TRUE o 1) en los casos P y (FALSE o 0) en los casos NP. De manera semejante, se crea la variable no promotor (NP). 
-
-Ahora se crean tantas variables binarias como categorias tiene la variable `clase`. 
+The `neuralnet()` function we will use for the neural network algorithm doesn't accept factor or categorical variables. In this case, we need to transform our `type` variable to binary type. We are going to create four five new variables acording to the cancer type with TRUE and FALSE values.
 
 
 ```{r}
-# Creacion de variables binarias a partir de la variable factor
+# Binary variables creation 
 
 data_nrm$ALL <- data$type=="ALL"
 data_nrm$AML <- data$type=="AML"
@@ -206,6 +166,7 @@ data_nrm$NoL <- data$type=="NoL"
 
 ```
 
+In the case of the data for the SVM algorithm, it requires all features to be numeric. In this case, every feature is an intefer, so we do not need to convert any factor into numbers
 
 ### Creating training and test datasets
 
@@ -220,10 +181,14 @@ Utilizaremos el 67% de los datos para training y el 33% para testing. La selecci
 set.seed(params$seed.train)
 
 train <- sample(nrow(data_nrm),floor(nrow(data_nrm)*params$p.train))
-
 data_nrm.train <- data_nrm[train,]
 data_nrm.test  <- data_nrm[-train,]
 
+# create training and test data SVM
+
+train_svm <- sample(nrow(data_svm),floor(nrow(data_svm)*params$p.train))
+data_svm.train <- data_svm[train_svm,]
+data_svm.test  <- data_svm[-train_svm,]
 
 ```
 
