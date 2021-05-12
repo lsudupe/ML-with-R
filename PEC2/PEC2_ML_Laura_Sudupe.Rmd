@@ -1,5 +1,5 @@
 ---
-title: 'Classification and diagnostic rpediction of cancers using gene expression profiling and artificial neural networks'
+title: 'Classification and diagnostic prediction of cancers using gene expression profiling and artificial neural networks'
 author: Laura Sudupe Medinilla
 subtitle: '`r params$subtitulo`'
 date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
@@ -73,14 +73,11 @@ In both cases, we are going to analyze the algorithms quality and performance wi
 
 ## Step 1 - Collecting the data 
 
+First of all, we are going to import the files we are going to need. In one hand, we have the `file` file where we have our data PCA analysis values, we are going to use the first 10 principal components for our analysis. In the `file3` we have our genetic expression data without changes. To finish, we are going to import the `file2` file where we have annotated the different cancer types. 
 
+```{r, message=FALSE,warning=FALSE}
 
-Importamos el fichero "promoters.txt" que se nos proporciona y el cual contiene en la primera columna el simbolo indicando la clase (+ = promotor); en la segunda columna el nombre de la secuencia promotora, denominandose las instancias que corresponden a no promotores por la posicion genomica; y en la tercera columna los 57 nucleotidos de cada secuencia.
-Importamos tambien el fichero `promoters_onehot` que ya contiene las secuencias codificadas segun un one-hot, pero tan solo se utilizara como comprobacion de resultados. 
-
-```{r, echo=FALSE}
 # import the csv
-
 file <- "pcaComponents7.csv"
 file2 <- "class7.csv"
 file3 <- "data7.csv"
@@ -89,9 +86,9 @@ pca_comp <- read.csv(file, header=TRUE)
 pca_10comp <- pca_comp[,1:10]
 
 tumor_type <- read.csv(file2, header=TRUE)
-
 data_original <- read.csv(file3, header = TRUE)
 
+#prepare our dataframes
 data <- cbind.data.frame(pca_10comp, tumor_type)
 data_svm <- cbind.data.frame(data_original, tumor_type)
 
@@ -99,15 +96,16 @@ data_svm <- cbind.data.frame(data_original, tumor_type)
 
 ## Step 2- Exploring and preparing the data 
 
-Usando el comando `str()`, observamos que el conjunto de datos promoters contiene `r nrow(promoters)` filas, que corresponden a las secuencias y `r ncol(promoters)` columnas, como mencionabamos previamente.  Las primeras 6 lineas del output son: 
+With the `str()` command, we observated the data in both cases. In the first case, we have `r nrow(data)` raws and `r ncol(data)` columns. In the second dataset, we have `r nrow(data_svm)` raws and `r ncol(data_svm)` columns.
 
-```{r}
+
+```{r, echo=FALSE}
 # examinando la estructura del dataset
 str(data)
 str(data_svm)
 ```
 
-Ya que muchos clasificadores de machine learning necesitan que la caracteristica diana sea codificada como factor, lo primero que tenemos que hacer es comprobar si la variable `V1`, que corresponde a la clase, es un factor. Esta variable corresponde a la primera columna del data frame `promoters` y que como deciamos previamente contiene el simbolo + si es un promotor o el simbolo - si no lo es. No lo es, por lo que lo codificamos:
+A lot of machine learning classifiers need the target variable to be a factor, so we codified our data.
 
 ```{r}
 #We are going to change the "x" column type and name
@@ -120,8 +118,6 @@ data_svm$x <- factor(data_svm$x, levels = c(1,2,3,4,5),
 #change in the both cases the "x" column name to "type"
 names(data)[11] <- "type"
 names(data_svm)[ncol(data_svm)] <- "type"
-
-
 
 ```
 
@@ -141,7 +137,6 @@ table(data$type)
 
 In both cases, we need to normalize our data, in the case of SVM, the R package we will use for fitting the model will perform the rescaling automaticaly, instead no in the neural network model.
 
-
 ```{r}
 
 #Our normalization function
@@ -153,7 +148,6 @@ data_nrm <- as.data.frame(lapply(data[,-11],normalize))
 summary(data_nrm)
 
 ```
-
 
 ### Binary variable creation instead of the factor class variables
 
@@ -176,11 +170,7 @@ In the case of the data for the SVM algorithm, it requires all features to be nu
 
 ### Creating training and test datasets
 
-Para generar los conjuntos de datos, utilizamos el data frame `promoters_encoding`, en el que cada fila es una secuencia de nucleotidos, y el orden es el mismo que el establecido en el data frame `promoters`
-
-Dividimos en dos partes `promoters_encoding`: un conjunto de datos de training `data_train`, que se utiliza para construir los diferentes modelos; y un conjunto de datos de testing `data_test` que se utiliza para estimar la precision predictiva de los modelos. 
-
-Utilizaremos el 67% de los datos para training y el 33% para testing. La seleccion de cada muestra se realiza de manera aleatoria, utilizando el valor de la semilla = 123, lo que nos permite reproducir mas tarde estos mismos data frames que se van a originar de manera aleatoria. En el data frame `sample_train`, la funcion `sample ()` selecciona, al azar, el 67% del total de filas (`r nrow(onehot_encoding)`)
+To generate the train and test data, we split both datasets in two parts. We will obtain to training data and two test data. We will extract the data randomly with `r round(params$p.train *100,2)`% of the observations
 
 ```{r}
 # create training and test data
@@ -217,21 +207,17 @@ The *Artificial Neural Network (ANN)* models the relationship between a set of i
 
 ## Step 3 - Training a model on the data
 
-Las redes neuronales funcionan mejor cuando los datos de entrada se escalan a un rango estrecho alrededor de cero. Puesto que en este caso tan solo tenemos valores de 0 o 1, no es necesario normalizar.
+We will use our normalized and binarized data. For the neural  network constructions we will use the `neuralnet()` function for the *neuralnet* package. 
+The model formula has `r ncol(data_nrm)` input nodes and `nlevels(data$type)` output nodes:
 
-Para la construccion de la red neuronal artificial se usa la funcion `neuralnet()` del paquete *neuralnet*. Como mencionabamos previamente, esta funcion no admite variables factor o categoricas, por lo que creamos las dos variables: P, que tiene valores (TRUE o 1) en los casos P y (FALSE o 0) en los casos NP. De manera semejante, se crea la variable NP. Esta funcion admite variables logicas (TRUE/FALSE) y las transforma a binarias internamente. 
-
-Al crear dos variables binarias como variables a predecir la red neuronal tendra 2 nodos de output.
-
-La formula del modelo tiene 228 nodos de entrada (resultado de la codificacion one-hot de cada nucleotido) y 2 nodos de salida:
 
 ```{r}
-## creamos una formula para un modelo con un gran numero de variables
+# we will create a formula for high variables dataset
 xnam <- names(data_nrm[1:10])
 (fmla <- as.formula(paste("ALL + AML + CLL + CML + NoL ~ ", paste(xnam, collapse= "+"))))
 ```
 
-Entrenamos una red multicapa con cuatro nodos ocultos, a la que llamaremos `ANN4`, y examinamos su topologia
+The moddel have one intermediate node, selected with `hidden=1`.
 
 ```{r}
 set.seed(1234567)
@@ -242,11 +228,11 @@ ANN1  <- neuralnet(fmla,
 ```
 
 ```{r}
-# representamos graficamente el modelo generado
+# model representation
 plot(ANN1,rep="best")  
 ```
 
-Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
+Same model representation with *NeuralNetTools* package
 
 ```{r}
 plotnet(ANN1, alpha = 0.6)
@@ -254,9 +240,7 @@ plotnet(ANN1, alpha = 0.6)
 
 ## Step 4 - Evaluating model performance
 
-Una vez obtenido el modelo, se procede a clasificar las muestras test con la funcion `compute`, la cual devuelve una lista con dos componentes: "neurons", que almacena los nodos para cada capa en la red y "net.result", que almacena los valores predichos. Queremos esto ultimo.
-
-Para la red neuronal `ANN4`:
+Once we obtain the model, let´s classify the test data with `compute` function
 
 ```{r}
 ANN1_results <- neuralnet::compute(ANN1, data_nrm.test[,1:10])$net.result
@@ -277,11 +261,13 @@ res1 <- table(prediction1, data$type[-train] )
 
 ```
 
-Utilizando una red neuronal de cuatro capas ocultas con categoria positiva 'P', de un total de `r sum(matrix$t)`, hay `r matrix$t[1,1]` verdaderos positivos, `r matrix$t[2,2]` verdaderos negativos, `r matrix$t[2,1]` falsos negativos  y `r matrix$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8824 y 1, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos negativos (2) es mayor que el de falsos positivos, puesto que no hay. 
+Using the neuronal network of one hidden node, we obtain `r sum(matrix1$t)`, with `r matrix$t[1,1]` true positives, `r matrix$t[2,2]` true negatives, `r matrix$t[2,1]` false negatives and `r matrix$t[1,2]` false positives. With this algorithm, we obtain `r round(matrix$overall["Accuracy"], 3)` precision and a `r round(matrix$overall["Kappa"], 7)` kappa value.
+
+Los valores de sensibilidad y especificidad son de 0.8824 y 1, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos negativos (2) es mayor que el de falsos positivos, puesto que no hay. 
 
 ## Step 5 - Model improvement
 
-Para observar si hay una mejora, probaremos a implementar una red neuronal de cinco capas ocultas.  Llamaremos al clasificador `ANN5`:
+We are going to try to improve the model with five hidden nodes. The model formula has `r ncol(data_nrm)` input nodes and `nlevels(data$type)` output nodes:
 
 ```{r}
 set.seed(1234567)
@@ -291,13 +277,13 @@ ANN5  <- neuralnet(fmla,
                    linear.output=FALSE)
 ```
 
-Ahora se representa el mismo modelo usando el paquete *NeuralNetTools*:
+Let's see the representation with *NeuralNetTools* package:
 
 ```{r}
 plotnet(ANN5, alpha = 0.6)
 ```
 
-Una vez obtenidos los modelos, se procede a clasificar las muestras test con la funcion `compute`, de la cual queremos los "net.result", que almacenan los valores predichos:
+We are going to classify our test data with the `compute` function
 
 ```{r}
 set.seed(1234567)
@@ -327,20 +313,17 @@ La red neuronal de cuatro capas ocultas es el mejores clasificador de secuencias
 
 ## *caret* packagev: `nnet` model
 
-La funci?n `nnet` admite datos de tipo factor, as? que no hay que transformar la variable `Class` en variables binarias. 
-
-Adem?s, se puede usar la funci?n `createDataPartition` para crear la partici?n de los datos en training/test.
+With the `nnet` function, we don't need to transdorme our target data to binary type. Also, we can use `createDataPartition` function to split the data in train and test.
 
 ```{r}
 library(nnet)
 
-#Partici?n de datos
 set.seed(params$seed.train)
 # We wish 75% for the trainset 
 inTrain <- createDataPartition(y=data$type, p=0.66666666666666667, list=FALSE)
 #dim(inTrain)
 
-# Dataset normalizado
+# normalized dataset
 data_nrm_net <- cbind(data_nrm[,1:10],type=data[,11])
 
 train.set_net <- data_nrm_net[inTrain,]
@@ -352,19 +335,21 @@ nrow(train.set_net)/nrow(test.set_net) # should be around 2
 
 **3-fold crossvalidation**
 
+Also, we are going to check the performance with 3-fold crossvalidation
+
 ```{r}
 
 set.seed(1234567)
 
-# modelo 5-crossvalidation 
+#3-crossvalidation model
 model_net3_cross <- train(type ~ ., train.set_net, method='nnet', 
                trControl= trainControl(method='cv', number=3), 
                tuneGrid= NULL, tuneLength=10 ,trace = FALSE)
 
 plotnet(model_net3_cross, alpha=0.6)
 summary(model_net3_cross)
-prediction_net3_cross <- predict(model_net3_cross, test.set_net[-11])           # predict
-table(prediction_net3_cross, test.set_net$type)                                  # compare
+prediction_net3_cross <- predict(model_net3_cross, test.set_net[-11])   # predict
+table(prediction_net3_cross, test.set_net$type)                         # compare
 
 # predict can also return the probability for each class:
 prediction_net3_cross_pro <- predict(model_net3_cross, test.set_net[-11], type="prob")  
@@ -406,9 +391,9 @@ pre_lm <- predict(lm, data_svm.test)
 pre_lm
 ```
 
+Let's see the model performance with `ConfusionMatrix()` function
 
 ```{r}
-#la categoria positiva es promotor (P)
 cm_lm <- confusionMatrix(pre_lm, data_svm.test$type)
 cm_lm
 ```
@@ -419,7 +404,6 @@ Utilizando un modelo SVM lineal con categoria positiva 'P', de un total de `r su
 ## Step 5 - Improvement the model
 
 We are going to do the same but with a Gaussian kernel `rbfdot` to try to improve the model performance
-
 
 ```{r}
 set.seed(1234567)
@@ -434,7 +418,6 @@ pre_gs
 ```
 
 ```{r}
-#la categoria positiva es promotor (P)
 cm_gs <- confusionMatrix(pre_gs, data_svm.test$type)
 cm_gs
 ```
@@ -448,7 +431,9 @@ Hasta ahora, podemos ver que tanto el SVM gausiano como la red neuronal de cuatr
 
 
 
-# Discusion 
+# Discussion 
+
+
 
 De acuerdo a las matrices de confusion, en las que siempre se ha otorgado a la secuencia promotora la categoria positiva, en general parece estar claro que, si nos centramos en la precision, el algoritmo de clasificacion que mejor funciona para el caso de estudio son los arboles de decision con boosting = 1, ya que la precision es maxima, clasificando en la clase "real" cada secuencia (promotora versus no promotora). Los arboles de decision con boosting=10 tambien obtienen una precision de 1, pero tan solo utilizaron una interaccion, por lo que las otras 9 no fueron necesarias. Tras este, obteniendo una precision de 0.9714, el modelo Random Forests con 100 arboles seria el siguiente mejor clasificador de secuencias. Tras estos dos, con una precision de 0.9429 se encuentran los algoritmos Random Forests con 50 arboles, el SVM gausiano y la red neuronal de 4 capas ocultas. Random Forests con 50 arboles y el SVM gausiano comparten que obtienen 1 falso negativo y 1 falso positivo, mientras que la red neuronal de cuatro capas ocultas obtiene dos falsos negativos y ningun falso positivo. A continuacion, con una precision de 0.9143 aparecen los algoritmos Naive Bayes, tanto con lapalce=0 como con laplace=1, ya que ambos clasifican bien 32 de 35 secuencias, mientras que el numero de falsos negativos es de 2 y el de falsos positivos de 1. Al utilizar el algoritmo SVM lineal se obtiene una precision de 0.8857, que si bien es bastante alta, nos demuestra que en este caso, si tuviesemos que escoger entre los dos SVM utilizados, escogeriamos el SVM gausiano. Lo mismo pasa con las redes neuronales, ya que al utilizar cinco capas ocultas obtenemos una precision de 0.8571, que al comparar con el resultado obtenido al utilizar cuatro capas ocultas nos indica que es mas aconsejable utilizar el modelo con menos capas. Por ultimo, aparecen los algoritmos k-NN, siendo el numero de vecinos utilizados mas optimo, el de 3, puesto que obtenemos una precision de 0.8. Utilizando menos vecinos (k=1), la precision baja a 0.7714, lo mismo que ocurre al aumentar los vecinos (con k=5 obtenemos una precision de 0.7429 y con k=7 de 0.7714).
 
