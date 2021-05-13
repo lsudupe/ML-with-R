@@ -5,17 +5,17 @@ subtitle: '`r params$subtitulo`'
 date: '`r format(Sys.Date(),"%e de %B, %Y")`' 
 # date: \today  (solo para pdf)
 output:
-  pdf_document:
-    keep_tex: yes
-    toc: yes
-    df_print: kable
-    highlight: zenburn
   html_document:
     df_print: paged
     toc: yes
     toc_float: true
     theme: united
     highlight: tango
+  pdf_document:
+    keep_tex: yes
+    toc: yes
+    df_print: kable
+    highlight: zenburn
   html_notebook:
     df_print: paged
     toc: yes
@@ -260,10 +260,9 @@ res1 <- table(prediction1, data$type[-train] )
 
 
 ```
+Using the neuronal network of one hidden node, we obtain `r sum(cmatrix1$t)`, with `r cmatrix1$t[1,1]` true positives in the case of ALL for example. With this algorithm, we obtain `r round(cmatrix1[["overall"]][["Accuracy"]], 3)`precision and a `r round(cmatrix1[["overall"]][["Kappa"]], 7)` kappa value.
 
-Using the neuronal network of one hidden node, we obtain `r sum(matrix1$t)`, with `r matrix$t[1,1]` true positives, `r matrix$t[2,2]` true negatives, `r matrix$t[2,1]` false negatives and `r matrix$t[1,2]` false positives. With this algorithm, we obtain `r round(matrix$overall["Accuracy"], 3)` precision and a `r round(matrix$overall["Kappa"], 7)` kappa value.
-
-Los valores de sensibilidad y especificidad son de 0.8824 y 1, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos negativos (2) es mayor que el de falsos positivos, puesto que no hay. 
+ 
 
 ## Step 5 - Model improvement
 
@@ -306,9 +305,10 @@ res5 <- table(prediction5, data$type[-train] )
 
 ```
 
-Utilizando una red neuronal de cinco capas ocultas con categoria positiva 'P', de un total de `r sum(matrix5$t)`, hay `r matrix5$t[1,1]` verdaderos positivos, `r matrix5$t[2,2]` verdaderos negativos, `r matrix5$t[2,1]` falsos negativos  y `r matrix5$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(matrix5$overall["Accuracy"], 3)` y un estadístico kappa de `r round(matrix5$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.8235 y 0.8889, respectivamente. Este algoritmo clasifica bien 30 de 35 secuencias, mientras que el numero de falsos negativos (3) es mayor que el de falsos positivos (2). En terminos generales, podemos ver que la red neuronal con cinco capas ocultas parece funcionar peor que la de cuatro capas ocultas.
 
-La red neuronal de cuatro capas ocultas es el mejores clasificador de secuencias promotoras hasta ahora.
+Using the neuronal network of one hidden node, we obtain `r sum(cmatrix5$t)`, with `r cmatrix5$t[1,1]` true positives in the case of ALL for example. With this algorithm, we obtain `r round(cmatrix5[["overall"]][["Accuracy"]], 3)`precision and a `r round(cmatrix5[["overall"]][["Kappa"]], 7)` kappa value.
+
+We have a better values of sensibility and specifity with the neural network with five hidden nodes.
 
 
 ## *caret* packagev: `nnet` model
@@ -398,7 +398,7 @@ cm_lm <- confusionMatrix(pre_lm, data_svm.test$type)
 cm_lm
 ```
 
-Utilizando un modelo SVM lineal con categoria positiva 'P', de un total de `r sum(cm$t)`, hay `r cm$t[1,1]` verdaderos positivos, `r cm$t[2,2]` verdaderos negativos, `r cm$t[2,1]` falsos negativos  y `r cm$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.8333, respectivamente. Este algoritmo clasifica bien 31 de 35 secuencias, mientras que el numero de falsos positivos (3) es mayor que el de falsos negativos (1). 
+Using the support vector machine model with a lineal kernel, we obtain `r sum(cm_lm$t)`, with `r cm_lm$t[1,1]` true positives in the case of ALL for example. With this algorithm, we obtain `r round(cm_lm[["overall"]][["Accuracy"]], 3)`precision and a `r round(cm_lm[["overall"]][["Kappa"]], 7)` kappa value.
 
 
 ## Step 5 - Improvement the model
@@ -422,21 +422,35 @@ cm_gs <- confusionMatrix(pre_gs, data_svm.test$type)
 cm_gs
 ```
 
-Utilizando un modelo SVM gausiano con categoria positiva 'P', de un total de `r sum(cm_g$t)`, hay `r cm_g$t[1,1]` verdaderos positivos, `r cm_g$t[2,2]` verdaderos negativos, `r cm_g$t[2,1]` falsos negativos  y `r cm_g$t[1,2]` falsos positivos.  Este algoritmo, por tanto, consigue una precision de `r round(cm_g$overall["Accuracy"], 3)` y un estadístico kappa de `r round(cm_g$overall["Kappa"], 7)`. Los valores de sensibilidad y especificidad son de 0.9412 y 0.9444, respectivamente. Este algoritmo clasifica bien 33 de 35 secuencias, mientras que el numero de falsos positivos y falsos negativos es bajo, tan solo 1 por cada uno. En terminos de eficiencia, el modelo ha mejorado con respecto al SVM lineal, puesto que clasifica bien 2 secuencias mas. Tambien aumenta la especificidad utilizando este algoritmo con respecto al lineal.
+Using the support vector machine model with a gaussian kernel, we obtain `r sum(cm_gs$t)`, with `r cm_gs$t[1,1]` true positives in the case of ALL for example. With this algorithm, we obtain `r round(cm_gs[["overall"]][["Accuracy"]], 3)`precision and a `r round(cm_gs[["overall"]][["Kappa"]], 7)` kappa value.
 
-En terminos generales, ambos modelos son bastantes eficientes, pero parece que el SVM gausiano funciona mejor con estos datos. 
+In general, both methods are efficient, but in this case the linear model has better performance with this data
 
-Hasta ahora, podemos ver que tanto el SVM gausiano como la red neuronal de cuatro capas ocultas obtienen las mejores eficiencias al clasificar las secuencias (promotoras o no). La diferencia entre ellos es que el SVM gausiano obtiene 1 falso negativo y 1 falso positivo, mientras que la red neuronal de cuatro capas ocultas obtiene dos falsos negativos y ningun falso positivo.
+### SVM `svmLinear`: 3-fold crossvalidation
+
+```{r}
+
+# model 3-crossvalidation 
+set.seed(1234567)
+modelb <- train(type ~ ., data_svm.train, method='svmLinear', 
+               trControl= trainControl(method='cv', number=3), 
+                tuneGrid= NULL, trace = FALSE)
 
 
+modelb
+predictionb <- predict(modelb, data_svm.test)                           # predict
+resb <- table(predictionb, data_svm.test$type)                             # compare
+
+confusionMatrix(resb)   
+```
 
 
 # Discussion 
 
+In the case of this dataset, we have five type of diagnostics so it doesn't make sense to award a positive category. In general, all the method have had a good performance, to understand better the reasons of the small changes we should analyze the preprocessing steps of the data. Due to the high different variables, it make sense the neural network with five hidden nodes has have a better performance instead of one hidden node model.
 
+We know the SVM model is very powerfull methods, in both cases it has have really good performance. Also, we didn't need to performn additional changes in the data, so this is a very considerable advantaje but also it increments the "black box" concept. In addition, the SVM seems to be the best method for these data.
 
-De acuerdo a las matrices de confusion, en las que siempre se ha otorgado a la secuencia promotora la categoria positiva, en general parece estar claro que, si nos centramos en la precision, el algoritmo de clasificacion que mejor funciona para el caso de estudio son los arboles de decision con boosting = 1, ya que la precision es maxima, clasificando en la clase "real" cada secuencia (promotora versus no promotora). Los arboles de decision con boosting=10 tambien obtienen una precision de 1, pero tan solo utilizaron una interaccion, por lo que las otras 9 no fueron necesarias. Tras este, obteniendo una precision de 0.9714, el modelo Random Forests con 100 arboles seria el siguiente mejor clasificador de secuencias. Tras estos dos, con una precision de 0.9429 se encuentran los algoritmos Random Forests con 50 arboles, el SVM gausiano y la red neuronal de 4 capas ocultas. Random Forests con 50 arboles y el SVM gausiano comparten que obtienen 1 falso negativo y 1 falso positivo, mientras que la red neuronal de cuatro capas ocultas obtiene dos falsos negativos y ningun falso positivo. A continuacion, con una precision de 0.9143 aparecen los algoritmos Naive Bayes, tanto con lapalce=0 como con laplace=1, ya que ambos clasifican bien 32 de 35 secuencias, mientras que el numero de falsos negativos es de 2 y el de falsos positivos de 1. Al utilizar el algoritmo SVM lineal se obtiene una precision de 0.8857, que si bien es bastante alta, nos demuestra que en este caso, si tuviesemos que escoger entre los dos SVM utilizados, escogeriamos el SVM gausiano. Lo mismo pasa con las redes neuronales, ya que al utilizar cinco capas ocultas obtenemos una precision de 0.8571, que al comparar con el resultado obtenido al utilizar cuatro capas ocultas nos indica que es mas aconsejable utilizar el modelo con menos capas. Por ultimo, aparecen los algoritmos k-NN, siendo el numero de vecinos utilizados mas optimo, el de 3, puesto que obtenemos una precision de 0.8. Utilizando menos vecinos (k=1), la precision baja a 0.7714, lo mismo que ocurre al aumentar los vecinos (con k=5 obtenemos una precision de 0.7429 y con k=7 de 0.7714).
-
-Con estos datos, podemos afirmar que los algoritmo k-NN son los menos optimos para clasificar secuencias promotoras con los datos del estudio, si bien es cierto que la precision no es extremadamente baja. El resto de clasificadores obtienen una precision bastante alta, pero sin duda, parece que el mejor algoritmo de clasificacion es el de arboles de decision, ya que parecen no cometer ningun error en las predicciones.Por supuesto, harian falta mas medidas de rendimiento para confirmar estos resultados, ya que tan solo con la eficiencia (o incluso con sensibilidad y especificidad) podemos estar perdiendonos informacion esecial y sobrevalorar o infravalorar un clasificador.
+In both cases we developt a crossvalidation mehotd we have very nice results. This is an example of another type of sampling we can apply to our data. But it has more computational work, it is a good option if your data is not very extensive.
 
 
